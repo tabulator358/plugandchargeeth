@@ -21,9 +21,24 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/",
   },
   {
-    label: "Plug & Charge",
-    href: "/plug-and-charge",
-    icon: <span className="text-lg">🔌</span>,
+    label: "Vehicle",
+    href: "/vehicle",
+    icon: <span className="text-lg">🚗</span>,
+  },
+  {
+    label: "Charger",
+    href: "/charger",
+    icon: <span className="text-lg">⚡</span>,
+  },
+  {
+    label: "Owner",
+    href: "/owner",
+    icon: <span className="text-lg">👑</span>,
+  },
+  {
+    label: "Mint USDC",
+    href: "/mint",
+    icon: <span className="text-lg">💰</span>,
   },
   {
     label: "Debug Contracts",

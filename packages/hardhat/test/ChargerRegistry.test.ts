@@ -46,16 +46,29 @@ describe("ChargerRegistry", function () {
       expect(charger.active).to.equal(true);
     });
 
-    it("Should not allow non-owner to register charger", async function () {
+    it("Should allow anyone to register charger", async function () {
       const { chargerRegistry, chargerOwner1 } = await loadFixture(deployChargerRegistryFixture);
 
-      const chargerId = 1;
+      const chargerId = 2; // Use different ID to avoid conflict
+      const latE7 = 500000000;
+      const lngE7 = 140000000;
+      const pricePerKWhMilliUSD = 300;
+      const powerKW = 50;
 
       await expect(
         chargerRegistry
           .connect(chargerOwner1)
-          .registerCharger(chargerId, chargerOwner1.address, 500000000, 140000000, 300, 50),
-      ).to.be.revertedWithCustomError(chargerRegistry, "OwnableUnauthorizedAccount");
+          .registerCharger(chargerId, chargerOwner1.address, latE7, lngE7, pricePerKWhMilliUSD, powerKW),
+      ).to.emit(chargerRegistry, "ChargerRegistered")
+        .withArgs(chargerId, chargerOwner1.address, latE7, lngE7, pricePerKWhMilliUSD, powerKW);
+
+      const charger = await chargerRegistry.get(chargerId);
+      expect(charger.owner).to.equal(chargerOwner1.address);
+      expect(charger.latE7).to.equal(latE7);
+      expect(charger.lngE7).to.equal(lngE7);
+      expect(charger.pricePerKWhMilliUSD).to.equal(pricePerKWhMilliUSD);
+      expect(charger.powerKW).to.equal(powerKW);
+      expect(charger.active).to.equal(true);
     });
 
     it("Should not allow registering charger with same ID twice", async function () {

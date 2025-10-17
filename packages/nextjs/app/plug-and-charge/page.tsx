@@ -6,11 +6,12 @@ import { useAccount } from "wagmi";
 import { Address, AddressInput, EtherInput } from "~~/components/scaffold-eth";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { Zap, Shield, Coins, Wallet, Battery, Car, MapPin, Clock } from "lucide-react";
+import { OwnerDashboard } from "./owner-dashboard";
 import "~~/styles/plug-and-charge.css";
 
 export default function PlugAndChargePage() {
   const { address } = useAccount();
-  const [activeTab, setActiveTab] = useState("vehicles");
+  const [activeTab, setActiveTab] = useState("charger");
   const [particles, setParticles] = useState<Array<{id: number, left: string, delay: string, duration: string}>>([]);
   const [isClient, setIsClient] = useState(false);
 
@@ -80,10 +81,10 @@ export default function PlugAndChargePage() {
         <div className="flex justify-center mb-8">
           <div className="glass-card p-2 flex gap-2">
             {[
-              { id: "vehicles", label: "Vehicles", icon: Car },
-              { id: "chargers", label: "Chargers", icon: MapPin },
-              { id: "sessions", label: "Sessions", icon: Battery },
-              { id: "usdc", label: "USDC", icon: Coins },
+              { id: "charger", label: "Charger Management", icon: MapPin },
+              { id: "vehicle", label: "Vehicle Management", icon: Car },
+              { id: "session", label: "Session Management", icon: Battery },
+              { id: "owner", label: "Owner Dashboard", icon: Shield },
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -103,10 +104,10 @@ export default function PlugAndChargePage() {
 
         {/* Tab Content */}
         <div className="max-w-6xl mx-auto">
-          {activeTab === "vehicles" && <VehicleManagement />}
-          {activeTab === "chargers" && <ChargerManagement />}
-          {activeTab === "sessions" && <SessionManagement />}
-          {activeTab === "usdc" && <USDCManagement />}
+          {activeTab === "charger" && <ChargerManagement />}
+          {activeTab === "vehicle" && <VehicleManagement />}
+          {activeTab === "session" && <SessionManagement />}
+          {activeTab === "owner" && <OwnerDashboard />}
         </div>
       </div>
     </div>
@@ -137,7 +138,9 @@ function VehicleManagement() {
         functionName: "registerVehicle",
         args: [
           keccak256(stringToBytes(vehicleId)),
-          keccak256(stringToBytes(chipId))
+          keccak256(stringToBytes(chipId)),
+          iso15118Enabled,
+          keccak256(stringToBytes(publicKey || "default_key"))
         ],
       });
       setVehicleId("");
@@ -209,6 +212,19 @@ function VehicleManagement() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Public Key (ISO 15118)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., 0x1234abcd... (for ISO 15118 authentication)"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300"
+                  value={publicKey}
+                  onChange={e => setPublicKey(e.target.value)}
+                />
+              </div>
+
 
               <div className="flex items-center gap-3">
                 <input
@@ -271,9 +287,9 @@ function VehicleManagement() {
                     <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                     <span className="text-sm font-medium text-green-400">Vehicle Found</span>
                   </div>
-                  <p className="text-white">
+                  <div className="text-white">
                     <span className="text-slate-400">Owner:</span> <Address address={vehicleOwner} />
-                  </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -473,9 +489,9 @@ function ChargerManagement() {
           </div>
           {chargerOwnerCheck && (
             <div className="mt-4 space-y-2">
-              <p>
+              <div>
                 <strong>Owner:</strong> <Address address={chargerOwnerCheck} />
-              </p>
+              </div>
               {chargerDetails && (
                 <>
                   <p>
@@ -532,13 +548,16 @@ function SessionManagement() {
   const createSession = async () => {
     if (!vehicleId || !chargerId || !sessionSalt || !initialDeposit) return;
     try {
+      const depositAmount = BigInt(parseFloat(initialDeposit) * 1e6);
+      
+      // Create session directly - allowance should be set separately
       await writePlugAndCharge({
         functionName: "createSession",
         args: [
           keccak256(stringToBytes(vehicleId)),
           BigInt(chargerId),
           keccak256(stringToBytes(sessionSalt)),
-          BigInt(parseFloat(initialDeposit) * 1e6), // Convert to USDC units
+          depositAmount,
           sponsor || "0x0000000000000000000000000000000000000000",
           false,
           {
@@ -688,17 +707,17 @@ function SessionManagement() {
           </div>
           {session && (
             <div className="mt-4 space-y-2">
-              <p>
+              <div>
                 <strong>Driver:</strong> <Address address={session.driver} />
-              </p>
-              <p>
+              </div>
+              <div>
                 <strong>Sponsor:</strong>{" "}
                 {session.sponsor === "0x0000000000000000000000000000000000000000" ? (
                   "None"
                 ) : (
                   <Address address={session.sponsor} />
                 )}
-              </p>
+              </div>
               <p>
                 <strong>Charger ID:</strong> {session.chargerId.toString()}
               </p>
@@ -732,6 +751,7 @@ function USDCManagement() {
   const [faucetAmount, setFaucetAmount] = useState("");
   const [mintAmount, setMintAmount] = useState("");
   const [mintTo, setMintTo] = useState("");
+  const [allowanceAmount, setAllowanceAmount] = useState("");
 
   const { writeContractAsync: writeMockUSDC } = useScaffoldWriteContract({
     contractName: "MockUSDC",
@@ -789,6 +809,24 @@ function USDCManagement() {
       });
     } catch (error) {
       console.error("Error minting tokens:", error);
+    }
+  };
+
+  const setAllowance = async () => {
+    if (!allowanceAmount) return;
+    try {
+      // Convert to USDC units (6 decimals)
+      const amount = BigInt(parseFloat(allowanceAmount) * 1e6);
+      await writeMockUSDC({
+        functionName: "approve",
+        args: [
+          "0x5FbDB2315678afecb367f032d93F642f64180aa3", // PlugAndChargeCore address
+          amount
+        ],
+      });
+      setAllowanceAmount("");
+    } catch (error) {
+      console.error("Error setting allowance:", error);
     }
   };
 
@@ -923,6 +961,42 @@ function USDCManagement() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Allowance Management */}
+      <div className="glass-card group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl">
+              <Shield className="w-6 h-6 text-blue-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white">Allowance Management</h3>
+          </div>
+          
+          <p className="text-slate-400 mb-6">Set large allowance for PlugAndCharge contract to avoid repeated approvals</p>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Allowance Amount (USDC)
+              </label>
+              <input
+                type="number"
+                placeholder="e.g., 10000 (for multiple sessions)"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-300"
+                value={allowanceAmount}
+                onChange={e => setAllowanceAmount(e.target.value)}
+              />
+            </div>
+
+            <button 
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-105"
+              onClick={setAllowance}
+            >
+              Set Large Allowance
+            </button>
           </div>
         </div>
       </div>

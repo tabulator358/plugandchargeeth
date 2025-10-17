@@ -867,6 +867,25 @@ const deployedContracts = {
           inputs: [
             {
               internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "getFaucetUsed",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
               name: "to",
               type: "address",
             },
@@ -2407,6 +2426,12 @@ const deployedContracts = {
               name: "chipId",
               type: "bytes32",
             },
+            {
+              indexed: false,
+              internalType: "bool",
+              name: "iso15118Enabled",
+              type: "bool",
+            },
           ],
           name: "VehicleRegistered",
           type: "event",
@@ -2441,6 +2466,25 @@ const deployedContracts = {
           inputs: [
             {
               internalType: "bytes32",
+              name: "vehicleHash",
+              type: "bytes32",
+            },
+          ],
+          name: "getPublicKey",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
               name: "chipId",
               type: "bytes32",
             },
@@ -2451,6 +2495,25 @@ const deployedContracts = {
               internalType: "bytes32",
               name: "",
               type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "vehicleHash",
+              type: "bytes32",
+            },
+          ],
+          name: "isIso15118Enabled",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
             },
           ],
           stateMutability: "view",
@@ -2511,6 +2574,16 @@ const deployedContracts = {
             {
               internalType: "bytes32",
               name: "chipId",
+              type: "bytes32",
+            },
+            {
+              internalType: "bool",
+              name: "iso15118Enabled",
+              type: "bool",
+            },
+            {
+              internalType: "bytes32",
+              name: "publicKeyHash",
               type: "bytes32",
             },
           ],

@@ -12,6 +12,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract MockUSDC is ERC20, ERC20Permit, Ownable {
     uint8 private _decimals;
+    
+    // Track faucet usage per address
+    mapping(address => uint256) private _faucetUsed;
 
     constructor(
         string memory name,
@@ -39,10 +42,12 @@ contract MockUSDC is ERC20, ERC20Permit, Ownable {
 
     /**
      * @dev Faucet function for easy testing - anyone can mint small amounts
-     * @param amount Amount of tokens to mint (max 10000 USDC)
+     * @param amount Amount of tokens to mint (max 10000 USDC total per address)
      */
     function faucet(uint256 amount) external {
-        require(amount <= 10000 * 10**_decimals, "MockUSDC: faucet limit exceeded");
+        uint256 newTotal = _faucetUsed[msg.sender] + amount;
+        require(newTotal <= 10000 * 10**_decimals, "MockUSDC: faucet limit exceeded");
+        _faucetUsed[msg.sender] = newTotal;
         _mint(msg.sender, amount);
     }
 
@@ -51,6 +56,16 @@ contract MockUSDC is ERC20, ERC20Permit, Ownable {
      */
     function quickFaucet() external {
         uint256 amount = 1000 * 10**_decimals; // 1000 USDC
+        uint256 newTotal = _faucetUsed[msg.sender] + amount;
+        require(newTotal <= 10000 * 10**_decimals, "MockUSDC: faucet limit exceeded");
+        _faucetUsed[msg.sender] = newTotal;
         _mint(msg.sender, amount);
+    }
+    
+    /**
+     * @dev Get faucet usage for an address
+     */
+    function getFaucetUsed(address account) external view returns (uint256) {
+        return _faucetUsed[account];
     }
 }

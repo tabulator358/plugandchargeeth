@@ -36,7 +36,9 @@ describe("PlugAndChargeCore", function () {
     const sessionSalt = ethers.keccak256(ethers.toUtf8Bytes("session_salt_123"));
 
     // Register vehicle
-    await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash);
+    const chipHash = ethers.keccak256(ethers.toUtf8Bytes("CHIP_123456789"));
+    const publicKeyHash = ethers.keccak256(ethers.toUtf8Bytes("0x1234abcd..."));
+    await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash);
 
     // Register charger
     await chargerRegistry.connect(owner).registerCharger(

@@ -25,9 +25,12 @@ describe("VehicleRegistry", function () {
 
       const vehicleHash = ethers.keccak256(ethers.toUtf8Bytes("TESLA_MODEL_3_ABC123"));
 
-      await expect(vehicleRegistry.connect(driver1).registerVehicle(vehicleHash))
+      const chipHash = ethers.keccak256(ethers.toUtf8Bytes("CHIP_123456789"));
+      const publicKeyHash = ethers.keccak256(ethers.toUtf8Bytes("0x1234abcd..."));
+      
+      await expect(vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash))
         .to.emit(vehicleRegistry, "VehicleRegistered")
-        .withArgs(vehicleHash, driver1.address);
+        .withArgs(vehicleHash, driver1.address, chipHash, true);
 
       expect(await vehicleRegistry.ownerOfVehicle(vehicleHash)).to.equal(driver1.address);
     });
@@ -37,9 +40,12 @@ describe("VehicleRegistry", function () {
 
       const vehicleHash = ethers.keccak256(ethers.toUtf8Bytes("TESLA_MODEL_3_ABC123"));
 
-      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash);
+      const chipHash = ethers.keccak256(ethers.toUtf8Bytes("CHIP_123456789"));
+      const publicKeyHash = ethers.keccak256(ethers.toUtf8Bytes("0x1234abcd..."));
+      
+      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash);
 
-      await expect(vehicleRegistry.connect(driver1).registerVehicle(vehicleHash)).to.be.revertedWithCustomError(
+      await expect(vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash)).to.be.revertedWithCustomError(
         vehicleRegistry,
         "ErrAlreadyRegistered",
       );
@@ -50,9 +56,12 @@ describe("VehicleRegistry", function () {
 
       const vehicleHash = ethers.keccak256(ethers.toUtf8Bytes("TESLA_MODEL_3_ABC123"));
 
-      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash);
+      const chipHash = ethers.keccak256(ethers.toUtf8Bytes("CHIP_123456789"));
+      const publicKeyHash = ethers.keccak256(ethers.toUtf8Bytes("0x1234abcd..."));
+      
+      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash);
 
-      await expect(vehicleRegistry.connect(driver2).registerVehicle(vehicleHash)).to.be.revertedWithCustomError(
+      await expect(vehicleRegistry.connect(driver2).registerVehicle(vehicleHash, chipHash, true, publicKeyHash)).to.be.revertedWithCustomError(
         vehicleRegistry,
         "ErrAlreadyRegistered",
       );
@@ -65,7 +74,10 @@ describe("VehicleRegistry", function () {
 
       const vehicleHash = ethers.keccak256(ethers.toUtf8Bytes("TESLA_MODEL_3_ABC123"));
 
-      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash);
+      const chipHash = ethers.keccak256(ethers.toUtf8Bytes("CHIP_123456789"));
+      const publicKeyHash = ethers.keccak256(ethers.toUtf8Bytes("0x1234abcd..."));
+      
+      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash);
 
       await expect(vehicleRegistry.connect(driver1).unregisterVehicle(vehicleHash))
         .to.emit(vehicleRegistry, "VehicleUnregistered")
@@ -90,7 +102,10 @@ describe("VehicleRegistry", function () {
 
       const vehicleHash = ethers.keccak256(ethers.toUtf8Bytes("TESLA_MODEL_3_ABC123"));
 
-      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash);
+      const chipHash = ethers.keccak256(ethers.toUtf8Bytes("CHIP_123456789"));
+      const publicKeyHash = ethers.keccak256(ethers.toUtf8Bytes("0x1234abcd..."));
+      
+      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash);
 
       await expect(vehicleRegistry.connect(driver2).unregisterVehicle(vehicleHash)).to.be.revertedWithCustomError(
         vehicleRegistry,
@@ -113,7 +128,10 @@ describe("VehicleRegistry", function () {
 
       const vehicleHash = ethers.keccak256(ethers.toUtf8Bytes("TESLA_MODEL_3_ABC123"));
 
-      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash);
+      const chipHash = ethers.keccak256(ethers.toUtf8Bytes("CHIP_123456789"));
+      const publicKeyHash = ethers.keccak256(ethers.toUtf8Bytes("0x1234abcd..."));
+      
+      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash);
 
       expect(await vehicleRegistry.ownerOfVehicle(vehicleHash)).to.equal(driver1.address);
     });
