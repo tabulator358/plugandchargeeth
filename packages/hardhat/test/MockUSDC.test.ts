@@ -71,7 +71,7 @@ describe("MockUSDC", function () {
     it("Should not allow faucet above limit", async function () {
       const { usdc, user1 } = await loadFixture(deployMockUSDCFixture);
 
-      const excessiveAmount = ethers.parseUnits("1001", 6); // Above 1000 USDC limit
+      const excessiveAmount = ethers.parseUnits("10001", 6); // Above 10000 USDC limit
 
       await expect(usdc.connect(user1).faucet(excessiveAmount)).to.be.revertedWith("MockUSDC: faucet limit exceeded");
     });
@@ -88,6 +88,18 @@ describe("MockUSDC", function () {
       // Second faucet call
       await usdc.connect(user1).faucet(faucetAmount);
       expect(await usdc.balanceOf(user1.address)).to.equal(faucetAmount * 2n);
+    });
+
+    it("Should allow quick faucet to give 1000 USDC", async function () {
+      const { usdc, user1 } = await loadFixture(deployMockUSDCFixture);
+
+      const expectedAmount = ethers.parseUnits("1000", 6);
+
+      await expect(usdc.connect(user1).quickFaucet())
+        .to.emit(usdc, "Transfer")
+        .withArgs(ethers.ZeroAddress, user1.address, expectedAmount);
+
+      expect(await usdc.balanceOf(user1.address)).to.equal(expectedAmount);
     });
   });
 

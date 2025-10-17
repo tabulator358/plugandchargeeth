@@ -1,11 +1,10 @@
-# 🏗 Scaffold-ETH 2
+# ⚡ PlugAndCharge.ETH
 
 <h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
+  Decentralized EV Charging with Plug & Charge Protocol
 </h4>
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+🚗 A decentralized electric vehicle charging system built on Ethereum blockchain. Features automatic vehicle identification, secure payments, and dispute resolution for seamless charging experiences.
 
 ⚙️ Built using NextJS, RainbowKit, Hardhat, Wagmi, Viem, and Typescript.
 

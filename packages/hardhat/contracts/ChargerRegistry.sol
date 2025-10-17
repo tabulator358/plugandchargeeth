@@ -41,7 +41,7 @@ contract ChargerRegistry is Ownable2Step {
 
     constructor(address initialOwner) Ownable(initialOwner) {}
 
-    /// @notice Registers a new charger, only contract owner (e.g., operator)
+    /// @notice Registers a new charger, anyone can register
     function registerCharger(
         uint256 chargerId,
         address owner,
@@ -49,7 +49,7 @@ contract ChargerRegistry is Ownable2Step {
         int32 lngE7,
         uint32 pricePerKWhMilliUSD,
         uint16 powerKW
-    ) external onlyOwner {
+    ) external {
         if (_chargers[chargerId].owner != address(0)) revert ErrAlreadyRegistered();
         _chargers[chargerId] = Charger({
             owner: owner,

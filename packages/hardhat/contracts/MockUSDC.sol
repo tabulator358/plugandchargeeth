@@ -39,10 +39,18 @@ contract MockUSDC is ERC20, ERC20Permit, Ownable {
 
     /**
      * @dev Faucet function for easy testing - anyone can mint small amounts
-     * @param amount Amount of tokens to mint (max 1000 USDC)
+     * @param amount Amount of tokens to mint (max 10000 USDC)
      */
     function faucet(uint256 amount) external {
-        require(amount <= 1000 * 10**_decimals, "MockUSDC: faucet limit exceeded");
+        require(amount <= 10000 * 10**_decimals, "MockUSDC: faucet limit exceeded");
+        _mint(msg.sender, amount);
+    }
+
+    /**
+     * @dev Quick faucet function - gives 1000 USDC to any address
+     */
+    function quickFaucet() external {
+        uint256 amount = 1000 * 10**_decimals; // 1000 USDC
         _mint(msg.sender, amount);
     }
 }

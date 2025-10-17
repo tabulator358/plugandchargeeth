@@ -971,6 +971,13 @@ const deployedContracts = {
         },
         {
           inputs: [],
+          name: "quickFaucet",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
           name: "renounceOwnership",
           outputs: [],
           stateMutability: "nonpayable",
@@ -2306,6 +2313,11 @@ const deployedContracts = {
         },
         {
           inputs: [],
+          name: "ErrChipAlreadyRegistered",
+          type: "error",
+        },
+        {
+          inputs: [],
           name: "ErrNotDriver",
           type: "error",
         },
@@ -2389,6 +2401,12 @@ const deployedContracts = {
               name: "driver",
               type: "address",
             },
+            {
+              indexed: false,
+              internalType: "bytes32",
+              name: "chipId",
+              type: "bytes32",
+            },
           ],
           name: "VehicleRegistered",
           type: "event",
@@ -2417,6 +2435,25 @@ const deployedContracts = {
           name: "acceptOwnership",
           outputs: [],
           stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "chipId",
+              type: "bytes32",
+            },
+          ],
+          name: "getVehicleByChip",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {
@@ -2469,6 +2506,11 @@ const deployedContracts = {
             {
               internalType: "bytes32",
               name: "vehicleHash",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "chipId",
               type: "bytes32",
             },
           ],

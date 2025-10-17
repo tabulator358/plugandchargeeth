@@ -6,23 +6,30 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 contract VehicleRegistry is Ownable2Step {
     // Mapping vehicleHash -> driver address
     mapping(bytes32 => address) private _vehicleOwners;
+    
+    // Mapping chipId -> vehicleHash (for quick lookup)
+    mapping(bytes32 => bytes32) private _chipToVehicle;
 
     // Errors
     error ErrNotDriver();
     error ErrAlreadyRegistered();
+    error ErrChipAlreadyRegistered();
     error ErrNotRegistered();
 
     // Events
-    event VehicleRegistered(bytes32 indexed vehicleHash, address indexed driver);
+    event VehicleRegistered(bytes32 indexed vehicleHash, address indexed driver, bytes32 chipId);
     event VehicleUnregistered(bytes32 indexed vehicleHash, address indexed driver);
 
     constructor(address initialOwner) Ownable(initialOwner) {}
 
-    /// @notice Registers a vehicle for msg.sender (driver)
-    function registerVehicle(bytes32 vehicleHash) external {
+    /// @notice Registers a vehicle with chip support
+    function registerVehicle(bytes32 vehicleHash, bytes32 chipId) external {
         if (_vehicleOwners[vehicleHash] != address(0)) revert ErrAlreadyRegistered();
+        if (_chipToVehicle[chipId] != bytes32(0)) revert ErrChipAlreadyRegistered();
+        
         _vehicleOwners[vehicleHash] = msg.sender;
-        emit VehicleRegistered(vehicleHash, msg.sender);
+        _chipToVehicle[chipId] = vehicleHash;
+        emit VehicleRegistered(vehicleHash, msg.sender, chipId);
     }
 
     /// @notice Unregisters a vehicle, only current driver
@@ -37,5 +44,10 @@ contract VehicleRegistry is Ownable2Step {
     /// @notice Returns the owner (driver) of a vehicle, or address(0) if not registered
     function ownerOfVehicle(bytes32 vehicleHash) external view returns (address) {
         return _vehicleOwners[vehicleHash];
+    }
+
+    /// @notice Returns vehicle hash by chip ID
+    function getVehicleByChip(bytes32 chipId) external view returns (bytes32) {
+        return _chipToVehicle[chipId];
     }
 }
