@@ -25,7 +25,7 @@ export const AddressInput = ({ value, name, placeholder, onChange, disabled }: C
     isError: isEnsAddressError,
   } = useEnsAddress({
     name: settledValue,
-    chainId: 1,
+    chainId: 1, // Mainnet for ENS resolution
     query: {
       gcTime: 30_000,
       enabled: isDebouncedValueLive && isENS(debouncedValue),
@@ -39,7 +39,7 @@ export const AddressInput = ({ value, name, placeholder, onChange, disabled }: C
     isError: isEnsNameError,
   } = useEnsName({
     address: settledValue as Address,
-    chainId: 1,
+    chainId: 1, // Mainnet for ENS resolution
     query: {
       enabled: isAddress(debouncedValue),
       gcTime: 30_000,
@@ -48,7 +48,7 @@ export const AddressInput = ({ value, name, placeholder, onChange, disabled }: C
 
   const { data: ensAvatar, isLoading: isEnsAvatarLoading } = useEnsAvatar({
     name: ensName ? normalize(ensName) : undefined,
-    chainId: 1,
+    chainId: 1, // Mainnet for ENS resolution
     query: {
       enabled: Boolean(ensName),
       gcTime: 30_000,

@@ -57,7 +57,7 @@ export const TupleArray = ({ abiTupleParameter, setParentForm, parentStateObject
       return { ...parentForm, [parentStateObjectKey]: JSON.stringify(argsArray, replacer) };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(form, replacer)]);
+  }, [form, abiTupleParameter.components, parentStateObjectKey, depth]);
 
   const addInput = () => {
     setAdditionalInputs(previousValue => {

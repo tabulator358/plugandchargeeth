@@ -15,6 +15,9 @@ contract ChargerRegistry is Ownable2Step {
 
     // chargerId -> Charger
     mapping(uint256 => Charger) private _chargers;
+    
+    // owner -> array of charger IDs
+    mapping(address => uint256[]) private _ownerChargers;
 
     // Errors
     error ErrNotChargerOwner();
@@ -59,6 +62,7 @@ contract ChargerRegistry is Ownable2Step {
             powerKW: powerKW,
             active: true
         });
+        _ownerChargers[owner].push(chargerId);
         emit ChargerRegistered(chargerId, owner, latE7, lngE7, pricePerKWhMilliUSD, powerKW);
     }
 
@@ -99,5 +103,10 @@ contract ChargerRegistry is Ownable2Step {
         Charger memory c = _chargers[chargerId];
         if (c.owner == address(0)) revert ErrNotRegistered();
         return c;
+    }
+
+    /// @notice Returns all charger IDs owned by a specific address
+    function getChargersByOwner(address owner) external view returns (uint256[] memory) {
+        return _ownerChargers[owner];
     }
 }

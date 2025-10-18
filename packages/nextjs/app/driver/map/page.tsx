@@ -77,59 +77,62 @@ const DriverMapPage = () => {
   // Stable address for comparison
   const stableAddress = useMemo(() => connectedAddress?.toLowerCase(), [connectedAddress]);
 
+  // Memoize processed chargers to prevent infinite loops
+  const processedChargers = useMemo(() => {
+    if (!chargerEvents) return [];
+    
+    return chargerEvents.map(event => ({
+      chargerId: event.args.chargerId?.toString() || "",
+      owner: event.args.owner || "",
+      latE7: event.args.latE7 || 0,
+      lngE7: event.args.lngE7 || 0,
+      pricePerKWhMilliUSD: event.args.pricePerKWhMilliUSD || 0,
+      powerKW: event.args.powerKW || 0,
+      active: true, // Default to active, would need additional call to get current status
+    }));
+  }, [chargerEvents]);
+
   // Load all chargers
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (chargerEvents) {
-      const allChargers = chargerEvents.map(event => ({
-        chargerId: event.args.chargerId?.toString() || "",
-        owner: event.args.owner || "",
-        latE7: event.args.latE7 || 0,
-        lngE7: event.args.lngE7 || 0,
-        pricePerKWhMilliUSD: event.args.pricePerKWhMilliUSD || 0,
-        powerKW: event.args.powerKW || 0,
-        active: true, // Default to active, would need additional call to get current status
-      }));
-      
-      // Only update if data has actually changed
-      const chargersChanged = JSON.stringify(allChargers) !== JSON.stringify(lastProcessedEvents.current.chargers);
-      if (chargersChanged) {
-        processingRef.current = true;
-        setChargers(allChargers);
-        lastProcessedEvents.current.chargers = allChargers;
-        processingRef.current = false;
-      }
+    // Only update if data has actually changed
+    const chargersChanged = JSON.stringify(processedChargers) !== JSON.stringify(lastProcessedEvents.current.chargers);
+    if (chargersChanged) {
+      processingRef.current = true;
+      setChargers(processedChargers);
+      lastProcessedEvents.current.chargers = processedChargers;
+      processingRef.current = false;
     }
-  }, [chargerEvents]);
+  }, [processedChargers]);
+
+  // Memoize processed vehicles to prevent infinite loops
+  const processedVehicles = useMemo(() => {
+    if (!vehicleEvents || !stableAddress) return [];
+    
+    return vehicleEvents
+      .filter(event => event.args.driver?.toLowerCase() === stableAddress)
+      .map(event => ({
+        vehicleHash: event.args.vehicleHash || "",
+        chipId: event.args.chipId || "",
+        iso15118Enabled: event.args.iso15118Enabled || false,
+        publicKeyHash: "", // Would need additional call to get this
+      }));
+  }, [vehicleEvents, stableAddress]);
 
   // Load user vehicles
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (vehicleEvents && stableAddress) {
-      const userVehicles = vehicleEvents
-        .filter(event => event.args.driver?.toLowerCase() === stableAddress)
-        .map(event => ({
-          vehicleHash: event.args.vehicleHash || "",
-          chipId: event.args.chipId || "",
-          iso15118Enabled: event.args.iso15118Enabled || false,
-          publicKeyHash: "", // Would need additional call to get this
-        }));
-      
-      // Only update if data has actually changed
-      const vehiclesChanged = JSON.stringify(userVehicles) !== JSON.stringify(lastProcessedEvents.current.vehicles);
-      if (vehiclesChanged) {
-        processingRef.current = true;
-        setVehicles(userVehicles);
-        lastProcessedEvents.current.vehicles = userVehicles;
-        processingRef.current = false;
-      }
-    } else if (!stableAddress) {
-      setVehicles([]);
-      lastProcessedEvents.current.vehicles = [];
+    // Only update if data has actually changed
+    const vehiclesChanged = JSON.stringify(processedVehicles) !== JSON.stringify(lastProcessedEvents.current.vehicles);
+    if (vehiclesChanged) {
+      processingRef.current = true;
+      setVehicles(processedVehicles);
+      lastProcessedEvents.current.vehicles = processedVehicles;
+      processingRef.current = false;
     }
-  }, [vehicleEvents, stableAddress]);
+  }, [processedVehicles]);
 
   // Generate random session salt
   const generateSessionSalt = () => {

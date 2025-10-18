@@ -88,14 +88,14 @@ export const Address = ({
 
   const { data: ens, isLoading: isEnsNameLoading } = useEnsName({
     address: checkSumAddress,
-    chainId: 1,
+    chainId: 1, // Mainnet for ENS resolution
     query: {
       enabled: isAddress(checkSumAddress ?? ""),
     },
   });
   const { data: ensAvatar } = useEnsAvatar({
     name: ens ? normalize(ens) : undefined,
-    chainId: 1,
+    chainId: 1, // Mainnet for ENS resolution
     query: {
       enabled: Boolean(ens),
       gcTime: 30_000,

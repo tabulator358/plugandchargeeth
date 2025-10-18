@@ -134,35 +134,38 @@ const AdminPage = () => {
     }
   }, [minDeposit, maxDeposit, refundTimeout]);
 
+  // Memoize processed sessions to prevent infinite loops
+  const processedSessions = useMemo(() => {
+    if (!sessionEvents) return [];
+    
+    return sessionEvents.map(event => ({
+      sessionId: event.args.sessionId?.toString() || "",
+      driver: event.args.driver || "",
+      sponsor: event.args.sponsor || "",
+      vehicleHash: event.args.vehicleHash || "",
+      chargerId: event.args.chargerId?.toString() || "",
+      state: 1, // Default to active, would need individual calls to get current state
+      reserved: event.args.initialDeposit?.toString() || "0",
+      proposed: "0",
+      startTs: Date.now(),
+      endTs: 0,
+      proposeTs: 0,
+    }));
+  }, [sessionEvents]);
+
   // Load all sessions
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (sessionEvents) {
-      const allSessions = sessionEvents.map(event => ({
-        sessionId: event.args.sessionId?.toString() || "",
-        driver: event.args.driver || "",
-        sponsor: event.args.sponsor || "",
-        vehicleHash: event.args.vehicleHash || "",
-        chargerId: event.args.chargerId?.toString() || "",
-        state: 1, // Default to active, would need individual calls to get current state
-        reserved: event.args.initialDeposit?.toString() || "0",
-        proposed: "0",
-        startTs: Date.now(),
-        endTs: 0,
-        proposeTs: 0,
-      }));
-      
-      // Only update if data has actually changed
-      const sessionsChanged = JSON.stringify(allSessions) !== JSON.stringify(lastProcessedEvents.current);
-      if (sessionsChanged) {
-        processingRef.current = true;
-        setSessions(allSessions);
-        lastProcessedEvents.current = allSessions;
-        processingRef.current = false;
-      }
+    // Only update if data has actually changed
+    const sessionsChanged = JSON.stringify(processedSessions) !== JSON.stringify(lastProcessedEvents.current);
+    if (sessionsChanged) {
+      processingRef.current = true;
+      setSessions(processedSessions);
+      lastProcessedEvents.current = processedSessions;
+      processingRef.current = false;
     }
-  }, [sessionEvents]);
+  }, [processedSessions]);
 
   // Set default values for update params form
   useEffect(() => {
@@ -171,7 +174,7 @@ const AdminPage = () => {
       setNewMaxDeposit(systemParams.maxDeposit);
       setNewRefundTimeout(systemParams.refundTimeout);
     }
-  }, [systemParams]);
+  }, [systemParams.minDeposit, systemParams.maxDeposit, systemParams.refundTimeout]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -323,12 +326,12 @@ const AdminPage = () => {
           <ExclamationTriangleIcon className="w-16 h-16 mx-auto mb-4 text-red-400" />
           <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
           <p className="text-gray-400 mb-4">Only the contract owner can access this dashboard</p>
-          <p className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500">
             Connected: <Address address={connectedAddress} />
-          </p>
-          <p className="text-sm text-gray-500">
+          </div>
+          <div className="text-sm text-gray-500">
             Owner: <Address address={contractOwner} />
-          </p>
+          </div>
         </div>
       </div>
     );
@@ -342,9 +345,9 @@ const AdminPage = () => {
           <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
-          <p className="text-gray-400">
+          <div className="text-gray-400">
             Contract Owner: <Address address={contractOwner} />
-          </p>
+          </div>
         </div>
 
         {/* System Overview */}

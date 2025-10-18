@@ -11,7 +11,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  StarIcon
+  StarIcon,
+  MapPinIcon
 } from "@heroicons/react/24/outline";
 import { 
   useScaffoldReadContract, 
@@ -19,7 +20,8 @@ import {
   useScaffoldEventHistory 
 } from "~~/hooks/scaffold-eth";
 import { Address } from "~~/components/scaffold-eth/Address/Address";
-import { parseEther, formatEther } from "viem";
+import { parseUnits, formatUnits } from "viem";
+import Link from "next/link";
 
 interface Vehicle {
   vehicleHash: string;
@@ -67,6 +69,8 @@ const DriverPage = () => {
   const [selectedOperator, setSelectedOperator] = useState("");
   const [addChargerMode, setAddChargerMode] = useState<"id" | "operator">("id");
   const [selectedChargerId, setSelectedChargerId] = useState("");
+  const [approvalAmount, setApprovalAmount] = useState("1000");
+  const [operatorChargers, setOperatorChargers] = useState<number[]>([]);
   
   // Refs to prevent infinite updates
   const processingRef = useRef(false);
@@ -90,6 +94,13 @@ const DriverPage = () => {
     args: connectedAddress ? [connectedAddress, "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"] : undefined,
   });
 
+  // Read chargers by operator
+  const { data: operatorChargersData } = useScaffoldReadContract({
+    contractName: "ChargerRegistry",
+    functionName: "getChargersByOwner",
+    args: selectedOperator ? [selectedOperator as `0x${string}`] : undefined,
+  });
+
   // Write contract hooks
   const { writeContractAsync: writeUSDCAsync } = useScaffoldWriteContract({
     contractName: "MockUSDC",
@@ -103,135 +114,148 @@ const DriverPage = () => {
     contractName: "VehicleRegistry",
   });
 
+  const { writeContractAsync: writeChargerRegistryAsync } = useScaffoldWriteContract({
+    contractName: "ChargerRegistry",
+  });
+
   // Event history for vehicles
   const { data: vehicleEvents } = useScaffoldEventHistory({
     contractName: "VehicleRegistry",
     eventName: "VehicleRegistered",
-    watch: false,
+    watch: true,
   });
 
   // Event history for trusted chargers
   const { data: trustedChargerEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "TrustedChargerSet",
-    watch: false,
+    watch: true,
   });
 
   // Event history for charging sessions
   const { data: sessionEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "SessionCreated",
-    watch: false,
+    watch: true,
   });
 
   // Stable address for comparison
   const stableAddress = useMemo(() => connectedAddress?.toLowerCase(), [connectedAddress]);
 
+  // Update operator chargers when data changes
+  useEffect(() => {
+    if (operatorChargersData) {
+      setOperatorChargers(operatorChargersData.map(id => Number(id)));
+    } else {
+      setOperatorChargers([]);
+    }
+  }, [operatorChargersData]);
+
+  // Memoize processed vehicles to prevent infinite loops
+  const processedVehicles = useMemo(() => {
+    if (!vehicleEvents || !stableAddress) return [];
+    
+    return vehicleEvents
+      .filter(event => event.args.driver?.toLowerCase() === stableAddress)
+      .map(event => ({
+        vehicleHash: event.args.vehicleHash || "",
+        chipId: event.args.chipId || "",
+        iso15118Enabled: event.args.iso15118Enabled || false,
+        publicKeyHash: "", // Would need additional call to get this - for now empty
+      }));
+  }, [vehicleEvents, stableAddress]);
+
   // Load vehicles for connected address
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (vehicleEvents && stableAddress) {
-      const userVehicles = vehicleEvents
-        .filter(event => event.args.driver?.toLowerCase() === stableAddress)
-        .map(event => ({
-          vehicleHash: event.args.vehicleHash || "",
-          chipId: event.args.chipId || "",
-          iso15118Enabled: event.args.iso15118Enabled || false,
-          publicKeyHash: "", // Would need additional call to get this
-        }));
-      
-      // Only update if data has actually changed
-      const vehiclesChanged = JSON.stringify(userVehicles) !== JSON.stringify(lastProcessedEvents.current.vehicles);
-      if (vehiclesChanged) {
-        processingRef.current = true;
-        setVehicles(userVehicles);
-        lastProcessedEvents.current.vehicles = userVehicles;
-        processingRef.current = false;
-      }
-    } else if (!stableAddress) {
-      setVehicles([]);
-      lastProcessedEvents.current.vehicles = [];
+    // Only update if data has actually changed
+    const vehiclesChanged = JSON.stringify(processedVehicles) !== JSON.stringify(lastProcessedEvents.current.vehicles);
+    if (vehiclesChanged) {
+      processingRef.current = true;
+      setVehicles(processedVehicles);
+      lastProcessedEvents.current.vehicles = processedVehicles;
+      processingRef.current = false;
     }
-  }, [vehicleEvents, stableAddress]);
+  }, [processedVehicles]);
+
+  // Memoize processed trusted chargers to prevent infinite loops
+  const processedTrustedChargers = useMemo(() => {
+    if (!trustedChargerEvents || !stableAddress) return [];
+    
+    return trustedChargerEvents
+      .filter(event => 
+        event.args.driver?.toLowerCase() === stableAddress && 
+        event.args.trusted === true
+      )
+      .map(event => ({
+        chargerId: event.args.chargerId?.toString() || "",
+        owner: event.args.chargerId?.toString() || "", // Would need to fetch from ChargerRegistry
+        latE7: 0,
+        lngE7: 0,
+        pricePerKWhMilliUSD: 0,
+        powerKW: 0,
+        active: true,
+      }));
+  }, [trustedChargerEvents, stableAddress]);
 
   // Load trusted chargers
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (trustedChargerEvents && stableAddress) {
-      const userTrustedChargers = trustedChargerEvents
-        .filter(event => 
-          event.args.driver?.toLowerCase() === stableAddress && 
-          event.args.trusted === true
-        )
-        .map(event => ({
-          chargerId: event.args.chargerId?.toString() || "",
-          owner: event.args.chargerId?.toString() || "", // Would need to fetch from ChargerRegistry
-          latE7: 0,
-          lngE7: 0,
-          pricePerKWhMilliUSD: 0,
-          powerKW: 0,
-          active: true,
-        }));
-      
-      // Only update if data has actually changed
-      const chargersChanged = JSON.stringify(userTrustedChargers) !== JSON.stringify(lastProcessedEvents.current.chargers);
-      if (chargersChanged) {
-        processingRef.current = true;
-        setTrustedChargers(userTrustedChargers);
-        lastProcessedEvents.current.chargers = userTrustedChargers;
-        processingRef.current = false;
-      }
-    } else if (!stableAddress) {
-      setTrustedChargers([]);
-      lastProcessedEvents.current.chargers = [];
+    // Only update if data has actually changed
+    const chargersChanged = JSON.stringify(processedTrustedChargers) !== JSON.stringify(lastProcessedEvents.current.chargers);
+    if (chargersChanged) {
+      processingRef.current = true;
+      setTrustedChargers(processedTrustedChargers);
+      lastProcessedEvents.current.chargers = processedTrustedChargers;
+      processingRef.current = false;
     }
-  }, [trustedChargerEvents, stableAddress]);
+  }, [processedTrustedChargers]);
+
+  // Memoize processed active sessions to prevent infinite loops
+  const processedActiveSessions = useMemo(() => {
+    if (!sessionEvents || !stableAddress) return [];
+    
+    return sessionEvents
+      .filter(event => event.args.driver?.toLowerCase() === stableAddress)
+      .map(event => ({
+        sessionId: event.args.sessionId?.toString() || "",
+        driver: event.args.driver || "",
+        sponsor: event.args.sponsor || "",
+        vehicleHash: event.args.vehicleHash || "",
+        chargerId: event.args.chargerId?.toString() || "",
+        state: 1, // Active state
+        reserved: event.args.initialDeposit?.toString() || "0",
+        proposed: "0",
+        startTs: 0,
+        endTs: 0,
+        proposeTs: 0,
+      }));
+  }, [sessionEvents, stableAddress]);
 
   // Load active sessions
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (sessionEvents && stableAddress) {
-      const userSessions = sessionEvents
-        .filter(event => event.args.driver?.toLowerCase() === stableAddress)
-        .map(event => ({
-          sessionId: event.args.sessionId?.toString() || "",
-          driver: event.args.driver || "",
-          sponsor: event.args.sponsor || "",
-          vehicleHash: event.args.vehicleHash || "",
-          chargerId: event.args.chargerId?.toString() || "",
-          state: 1, // Active state
-          reserved: event.args.initialDeposit?.toString() || "0",
-          proposed: "0",
-          startTs: Date.now(),
-          endTs: 0,
-          proposeTs: 0,
-        }));
-      
-      // Only update if data has actually changed
-      const sessionsChanged = JSON.stringify(userSessions) !== JSON.stringify(lastProcessedEvents.current.sessions);
-      if (sessionsChanged) {
-        processingRef.current = true;
-        setActiveSessions(userSessions);
-        lastProcessedEvents.current.sessions = userSessions;
-        processingRef.current = false;
-      }
-    } else if (!stableAddress) {
-      setActiveSessions([]);
-      lastProcessedEvents.current.sessions = [];
+    // Only update if data has actually changed
+    const sessionsChanged = JSON.stringify(processedActiveSessions) !== JSON.stringify(lastProcessedEvents.current.sessions);
+    if (sessionsChanged) {
+      processingRef.current = true;
+      setActiveSessions(processedActiveSessions);
+      lastProcessedEvents.current.sessions = processedActiveSessions;
+      processingRef.current = false;
     }
-  }, [sessionEvents, stableAddress]);
+  }, [processedActiveSessions]);
 
   // Approve USDC for PlugAndChargeCore
   const handleApproveUSDC = async () => {
-    if (!connectedAddress) return;
+    if (!connectedAddress || !approvalAmount) return;
     
     try {
       await writeUSDCAsync({
         functionName: "approve",
-        args: ["0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9", parseEther("1000")], // Approve 1000 USDC
+        args: ["0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9", parseUnits(approvalAmount, 6)],
       });
     } catch (error) {
       console.error("Error approving USDC:", error);
@@ -296,6 +320,27 @@ const DriverPage = () => {
     }
   };
 
+  // Add all chargers by operator
+  const handleAddAllChargersByOperator = async () => {
+    if (!connectedAddress || !selectedOperator || operatorChargers.length === 0) return;
+    
+    try {
+      // Add each charger as trusted
+      for (const chargerId of operatorChargers) {
+        await writePlugAndChargeAsync({
+          functionName: "setTrustedCharger",
+          args: [connectedAddress, BigInt(chargerId), true],
+        });
+      }
+      
+      setShowAddCharger(false);
+      setSelectedOperator("");
+      setOperatorChargers([]);
+    } catch (error) {
+      console.error("Error adding all chargers by operator:", error);
+    }
+  };
+
 
   if (!connectedAddress) {
     return (
@@ -337,7 +382,7 @@ const DriverPage = () => {
               <h3 className="text-xl font-bold text-cyan-400">USDC Balance</h3>
             </div>
             <p className="text-2xl font-bold text-white">
-              {usdcBalance ? formatEther(usdcBalance) : "0"} USDC
+              {usdcBalance ? formatUnits(usdcBalance, 6) : "0"} USDC
             </p>
           </div>
 
@@ -347,14 +392,48 @@ const DriverPage = () => {
               <h3 className="text-xl font-bold text-green-400">USDC Approval</h3>
             </div>
             <p className="text-sm text-gray-400 mb-4">
-              Allowance: {usdcAllowance ? formatEther(usdcAllowance) : "0"} USDC
+              Allowance: {usdcAllowance ? formatUnits(usdcAllowance, 6) : "0"} USDC
             </p>
-            <button
-              onClick={handleApproveUSDC}
-              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium transition-colors"
-            >
-              Approve 1000 USDC
-            </button>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Approval Amount (USDC)
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter amount..."
+                  value={approvalAmount}
+                  onChange={(e) => setApprovalAmount(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setApprovalAmount("100")}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-white"
+                >
+                  100
+                </button>
+                <button
+                  onClick={() => setApprovalAmount("500")}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-white"
+                >
+                  500
+                </button>
+                <button
+                  onClick={() => setApprovalAmount("1000")}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm text-white"
+                >
+                  1000
+                </button>
+              </div>
+              <button
+                onClick={handleApproveUSDC}
+                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium transition-colors"
+              >
+                Approve {approvalAmount} USDC
+              </button>
+            </div>
           </div>
         </div>
 
@@ -372,7 +451,7 @@ const DriverPage = () => {
                     <div>
                       <h3 className="text-lg font-bold text-orange-400">Session #{session.sessionId}</h3>
                       <p className="text-gray-300">Charger ID: {session.chargerId}</p>
-                      <p className="text-gray-300">Reserved: {formatEther(BigInt(session.reserved))} USDC</p>
+                      <p className="text-gray-300">Reserved: {formatUnits(BigInt(session.reserved), 6)} USDC</p>
                     </div>
                     <div className="text-right">
                       <div className="flex items-center gap-2 text-green-400">
@@ -491,12 +570,20 @@ const DriverPage = () => {
                     <h3 className="text-lg font-bold text-blue-400">Vehicle #{index + 1}</h3>
                   </div>
                   <div className="space-y-2 text-sm">
-                    <p className="text-gray-300">
-                      <span className="text-gray-500">Hash:</span> {vehicle.vehicleHash.slice(0, 10)}...
-                    </p>
-                    <p className="text-gray-300">
-                      <span className="text-gray-500">Chip ID:</span> {vehicle.chipId.slice(0, 10)}...
-                    </p>
+                    <div>
+                      <span className="text-gray-500">Hash:</span>
+                      <p className="text-gray-300 font-mono text-xs break-all">{vehicle.vehicleHash}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Chip ID:</span>
+                      <p className="text-gray-300 font-mono text-xs break-all">{vehicle.chipId}</p>
+                    </div>
+                    {vehicle.publicKeyHash && (
+                      <div>
+                        <span className="text-gray-500">Public Key Hash:</span>
+                        <p className="text-gray-300 font-mono text-xs break-all">{vehicle.publicKeyHash}</p>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <span className="text-gray-500">ISO-15118:</span>
                       {vehicle.iso15118Enabled ? (
@@ -600,19 +687,29 @@ const DriverPage = () => {
                       <p className="text-sm text-gray-400 mb-2">
                         <strong>Operator Address:</strong> {selectedOperator}
                       </p>
+                      {operatorChargers.length > 0 ? (
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-300 mb-2">
+                            Found {operatorChargers.length} charger(s): {operatorChargers.join(", ")}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 mb-4">No chargers found for this operator</p>
+                      )}
                       <div className="flex gap-4">
                         <button
-                          onClick={() => {
-                            // TODO: Add all chargers from this operator address
-                            setShowAddCharger(false);
-                            setSelectedOperator("");
-                          }}
-                          className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium transition-colors"
+                          onClick={handleAddAllChargersByOperator}
+                          disabled={operatorChargers.length === 0}
+                          className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
                         >
-                          Add All Chargers
+                          Add All Chargers ({operatorChargers.length})
                         </button>
                         <button
-                          onClick={() => setShowAddCharger(false)}
+                          onClick={() => {
+                            setShowAddCharger(false);
+                            setSelectedOperator("");
+                            setOperatorChargers([]);
+                          }}
                           className="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
                         >
                           Cancel

@@ -44,7 +44,7 @@ test.describe('Landing Page', () => {
     await expect(exploreButton).toBeVisible();
     await exploreButton.click();
     
-    // Should navigate to plug-and-charge page
+    // Should navigate to appropriate page
     await page.waitForLoadState('networkidle');
   });
 

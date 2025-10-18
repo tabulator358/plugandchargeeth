@@ -20,7 +20,10 @@
     "lint-staged": "eslint",
     "test": "REPORT_GAS=true hardhat test --network hardhat",
     "coverage": "hardhat coverage",
-    "verify": "hardhat etherscan-verify"
+    "verify": "hardhat etherscan-verify",
+    "test-data": "hardhat run scripts/showTestData.ts",
+    "test-accounts": "hardhat run scripts/getTestAccounts.ts",
+    "check-data": "hardhat run scripts/checkDeployedData.ts"
   },
   "dependencies": {
     "@inquirer/password": "^4.0.2",

@@ -94,85 +94,134 @@ const ChargerPage = () => {
   const { data: chargerEvents } = useScaffoldEventHistory({
     contractName: "ChargerRegistry",
     eventName: "ChargerRegistered",
-    watch: false,
+    watch: true,
+  });
+
+  // Event history for charger updates
+  const { data: chargerUpdateEvents } = useScaffoldEventHistory({
+    contractName: "ChargerRegistry",
+    eventName: "ChargerUpdated",
+    watch: true,
+  });
+
+  // Event history for charger active status changes
+  const { data: chargerActiveEvents } = useScaffoldEventHistory({
+    contractName: "ChargerRegistry",
+    eventName: "ChargerActiveSet",
+    watch: true,
   });
 
   // Event history for sessions
   const { data: sessionEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "SessionCreated",
-    watch: false,
+    watch: true,
   });
 
   // Stable address for comparison
   const stableAddress = useMemo(() => connectedAddress?.toLowerCase(), [connectedAddress]);
 
-  // Load owned chargers
+  // Memoize processed chargers to prevent infinite loops
+  const processedChargers = useMemo(() => {
+    if (!chargerEvents) return [];
+    
+    // Start with registered chargers
+    const allChargers = chargerEvents.map(event => ({
+      chargerId: event.args.chargerId?.toString() || "",
+      owner: event.args.owner || "",
+      latE7: Number(event.args.latE7) || 0,
+      lngE7: Number(event.args.lngE7) || 0,
+      pricePerKWhMilliUSD: Number(event.args.pricePerKWhMilliUSD) || 0,
+      powerKW: Number(event.args.powerKW) || 0,
+      active: true,
+    }));
+
+    // Apply updates from ChargerUpdated events
+    if (chargerUpdateEvents) {
+      chargerUpdateEvents.forEach(event => {
+        const chargerId = event.args.chargerId?.toString() || "";
+        const chargerIndex = allChargers.findIndex(c => c.chargerId === chargerId);
+        if (chargerIndex !== -1) {
+          allChargers[chargerIndex] = {
+            ...allChargers[chargerIndex],
+            latE7: Number(event.args.latE7) || allChargers[chargerIndex].latE7,
+            lngE7: Number(event.args.lngE7) || allChargers[chargerIndex].lngE7,
+            pricePerKWhMilliUSD: Number(event.args.pricePerKWhMilliUSD) || allChargers[chargerIndex].pricePerKWhMilliUSD,
+            powerKW: Number(event.args.powerKW) || allChargers[chargerIndex].powerKW,
+          };
+        }
+      });
+    }
+
+    // Apply active status changes from ChargerActiveSet events
+    if (chargerActiveEvents) {
+      chargerActiveEvents.forEach(event => {
+        const chargerId = event.args.chargerId?.toString() || "";
+        const chargerIndex = allChargers.findIndex(c => c.chargerId === chargerId);
+        if (chargerIndex !== -1) {
+          allChargers[chargerIndex] = {
+            ...allChargers[chargerIndex],
+            active: event.args.active || false,
+          };
+        }
+      });
+    }
+    
+    return allChargers;
+  }, [chargerEvents, chargerUpdateEvents, chargerActiveEvents]);
+
+  // Load all chargers
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (chargerEvents && stableAddress) {
-      const ownedChargers = chargerEvents
-        .filter(event => event.args.owner?.toLowerCase() === stableAddress)
-        .map(event => ({
-          chargerId: event.args.chargerId?.toString() || "",
-          owner: event.args.owner || "",
-          latE7: event.args.latE7 || 0,
-          lngE7: event.args.lngE7 || 0,
-          pricePerKWhMilliUSD: event.args.pricePerKWhMilliUSD || 0,
-          powerKW: event.args.powerKW || 0,
-          active: true, // Default to active, would need additional call to get current status
-        }));
-      
-      // Only update if data has actually changed
-      const chargersChanged = JSON.stringify(ownedChargers) !== JSON.stringify(lastProcessedEvents.current.chargers);
-      if (chargersChanged) {
-        processingRef.current = true;
-        setChargers(ownedChargers);
-        lastProcessedEvents.current.chargers = ownedChargers;
-        processingRef.current = false;
-      }
-    } else if (!stableAddress) {
-      setChargers([]);
-      lastProcessedEvents.current.chargers = [];
+    // Only update if data has actually changed
+    const chargersChanged = JSON.stringify(processedChargers) !== JSON.stringify(lastProcessedEvents.current.chargers);
+    if (chargersChanged) {
+      processingRef.current = true;
+      setChargers(processedChargers);
+      lastProcessedEvents.current.chargers = processedChargers;
+      processingRef.current = false;
     }
-  }, [chargerEvents, stableAddress]);
+  }, [processedChargers]);
+
+  // Memoize processed active sessions to prevent infinite loops
+  const processedActiveSessions = useMemo(() => {
+    if (!sessionEvents || !stableAddress || chargers.length === 0) return [];
+    
+    const ownedChargerIds = chargers
+      .filter(c => c.owner.toLowerCase() === stableAddress)
+      .map(c => c.chargerId);
+    
+    return sessionEvents
+      .filter(event => ownedChargerIds.includes(event.args.chargerId?.toString() || ""))
+      .map(event => ({
+        sessionId: event.args.sessionId?.toString() || "",
+        driver: event.args.driver || "",
+        sponsor: event.args.sponsor || "",
+        vehicleHash: event.args.vehicleHash || "",
+        chargerId: event.args.chargerId?.toString() || "",
+        state: 1, // Active state
+        reserved: event.args.initialDeposit?.toString() || "0",
+        proposed: "0",
+        startTs: 0,
+        endTs: 0,
+        proposeTs: 0,
+      }));
+  }, [sessionEvents, stableAddress, chargers]);
 
   // Load active sessions for owned chargers
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (sessionEvents && stableAddress && chargers.length > 0) {
-      const ownedChargerIds = chargers.map(c => c.chargerId);
-      const ownedSessions = sessionEvents
-        .filter(event => ownedChargerIds.includes(event.args.chargerId?.toString() || ""))
-        .map(event => ({
-          sessionId: event.args.sessionId?.toString() || "",
-          driver: event.args.driver || "",
-          sponsor: event.args.sponsor || "",
-          vehicleHash: event.args.vehicleHash || "",
-          chargerId: event.args.chargerId?.toString() || "",
-          state: 1, // Active state
-          reserved: event.args.initialDeposit?.toString() || "0",
-          proposed: "0",
-          startTs: Date.now(),
-          endTs: 0,
-          proposeTs: 0,
-        }));
-      
-      // Only update if data has actually changed
-      const sessionsChanged = JSON.stringify(ownedSessions) !== JSON.stringify(lastProcessedEvents.current.sessions);
-      if (sessionsChanged) {
-        processingRef.current = true;
-        setActiveSessions(ownedSessions);
-        lastProcessedEvents.current.sessions = ownedSessions;
-        processingRef.current = false;
-      }
-    } else if (!stableAddress || chargers.length === 0) {
-      setActiveSessions([]);
-      lastProcessedEvents.current.sessions = [];
+    // Only update if data has actually changed
+    const sessionsChanged = JSON.stringify(processedActiveSessions) !== JSON.stringify(lastProcessedEvents.current.sessions);
+    if (sessionsChanged) {
+      processingRef.current = true;
+      setActiveSessions(processedActiveSessions);
+      lastProcessedEvents.current.sessions = processedActiveSessions;
+      processingRef.current = false;
     }
-  }, [sessionEvents, stableAddress, chargers]);
+  }, [processedActiveSessions]);
 
   // Set default values when connected
   useEffect(() => {
@@ -359,13 +408,18 @@ const ChargerPage = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Charger Operator Dashboard
-          </h1>
-          <p className="text-gray-400">
-            Connected as: <Address address={connectedAddress} />
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                Charger Operator Dashboard
+              </h1>
+              <div className="text-gray-400">
+                Connected as: <Address address={connectedAddress} />
+              </div>
+            </div>
+          </div>
         </div>
+
 
         {/* My Chargers Section */}
         <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-sm p-6 rounded-3xl border border-blue-500/20 mb-6">
@@ -487,10 +541,10 @@ const ChargerPage = () => {
 
           {/* Chargers List */}
           <div className="space-y-4">
-            {chargers.length === 0 ? (
+            {chargers.filter(c => c.owner.toLowerCase() === stableAddress).length === 0 ? (
               <p className="text-gray-400 text-center py-8">No chargers registered yet</p>
             ) : (
-              chargers.map((charger) => (
+              chargers.filter(c => c.owner.toLowerCase() === stableAddress).map((charger) => (
                 <div key={charger.chargerId} className="bg-gray-800/50 p-4 rounded-2xl border border-gray-600">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -504,6 +558,7 @@ const ChargerPage = () => {
                       </div>
                       <div className="grid md:grid-cols-4 gap-4 text-sm">
                         <div className="flex items-center gap-2">
+                          {/* Location icon */}
                           <MapPinIcon className="w-4 h-4 text-gray-400" />
                           <span className="text-gray-300">
                             {charger.latE7 / 1e7}, {charger.lngE7 / 1e7}
@@ -603,103 +658,8 @@ const ChargerPage = () => {
           </div>
         </div>
 
-        {/* Active Charging Sessions Section */}
-        <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-sm p-6 rounded-3xl border border-green-500/20 mb-6">
-          <h2 className="text-xl font-bold text-green-400 flex items-center gap-2 mb-6">
-            <PlayIcon className="w-6 h-6" />
-            Active Charging Sessions
-          </h2>
-
-          <div className="space-y-4">
-            {activeSessions.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No active charging sessions</p>
-            ) : (
-              activeSessions.map((session) => (
-                <div key={session.sessionId} className="bg-gray-800/50 p-4 rounded-2xl border border-gray-600">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-2">
-                        <h3 className="text-lg font-bold text-white">Session #{session.sessionId}</h3>
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
-                          Active
-                        </span>
-                      </div>
-                      <div className="grid md:grid-cols-3 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <UserIcon className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-300">
-                            Driver: <Address address={session.driver} />
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <PowerIcon className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-300">
-                            Charger #{session.chargerId}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-300">
-                            ${(parseInt(session.reserved) / 1e6).toFixed(2)} reserved
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setProposingSessionId(session.sessionId)}
-                        className="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded-lg text-white text-sm transition-colors flex items-center gap-1"
-                      >
-                        <StopIcon className="w-4 h-4" />
-                        End & Propose
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Propose Charge Form */}
-                  {proposingSessionId === session.sessionId && (
-                    <div className="mt-4 pt-4 border-t border-gray-600">
-                      <h4 className="text-md font-bold text-orange-400 mb-3">End Session & Propose Charge</h4>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Charge Amount (USDC)
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="e.g., 5.50"
-                          value={proposeAmount}
-                          onChange={(e) => setProposeAmount(e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">
-                          Maximum: ${(parseInt(session.reserved) / 1e6).toFixed(2)} USDC
-                        </p>
-                      </div>
-                      <div className="flex gap-4">
-                        <button
-                          onClick={() => handleEndAndPropose(session.sessionId)}
-                          className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg text-white font-medium transition-colors"
-                        >
-                          End & Propose Charge
-                        </button>
-                        <button
-                          onClick={() => setProposingSessionId(null)}
-                          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
         {/* Start New Charging Session Section */}
-        <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-sm p-6 rounded-3xl border border-purple-500/20">
+        <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-sm p-6 rounded-3xl border border-purple-500/20 mb-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-purple-400 flex items-center gap-2">
               <PlayIcon className="w-6 h-6" />
@@ -850,6 +810,102 @@ const ChargerPage = () => {
             </div>
           )}
         </div>
+
+        {/* Active Charging Sessions Section */}
+        <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-sm p-6 rounded-3xl border border-green-500/20 mb-6">
+          <h2 className="text-xl font-bold text-green-400 flex items-center gap-2 mb-6">
+            <PlayIcon className="w-6 h-6" />
+            My Active Charging Sessions
+          </h2>
+
+          <div className="space-y-4">
+            {activeSessions.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">No active charging sessions</p>
+            ) : (
+              activeSessions.map((session) => (
+                <div key={session.sessionId} className="bg-gray-800/50 p-4 rounded-2xl border border-gray-600">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-2">
+                        <h3 className="text-lg font-bold text-white">Session #{session.sessionId}</h3>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                          Active
+                        </span>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <UserIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Driver: <Address address={session.driver} />
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <PowerIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Charger #{session.chargerId}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            ${(parseInt(session.reserved) / 1e6).toFixed(2)} reserved
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setProposingSessionId(session.sessionId)}
+                        className="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded-lg text-white text-sm transition-colors flex items-center gap-1"
+                      >
+                        <StopIcon className="w-4 h-4" />
+                        End & Propose
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Propose Charge Form */}
+                  {proposingSessionId === session.sessionId && (
+                    <div className="mt-4 pt-4 border-t border-gray-600">
+                      <h4 className="text-md font-bold text-orange-400 mb-3">End Session & Propose Charge</h4>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Charge Amount (USDC)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="e.g., 5.50"
+                          value={proposeAmount}
+                          onChange={(e) => setProposeAmount(e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Maximum: ${(parseInt(session.reserved) / 1e6).toFixed(2)} USDC
+                        </p>
+                      </div>
+                      <div className="flex gap-4">
+                        <button
+                          onClick={() => handleEndAndPropose(session.sessionId)}
+                          className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg text-white font-medium transition-colors"
+                        >
+                          End & Propose Charge
+                        </button>
+                        <button
+                          onClick={() => setProposingSessionId(null)}
+                          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );
