@@ -1,0 +1,660 @@
+{
+  "address": "0x670cdd7e266bCcFb734BFfc0159441590412ef5a",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "initialOwner",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "ErrAlreadyRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ErrNotChargerOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ErrNotRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableInvalidOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "active",
+          "type": "bool"
+        }
+      ],
+      "name": "ChargerActiveSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "int32",
+          "name": "latE7",
+          "type": "int32"
+        },
+        {
+          "indexed": false,
+          "internalType": "int32",
+          "name": "lngE7",
+          "type": "int32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "pricePerKWhMilliUSD",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "powerKW",
+          "type": "uint16"
+        }
+      ],
+      "name": "ChargerRegistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int32",
+          "name": "latE7",
+          "type": "int32"
+        },
+        {
+          "indexed": false,
+          "internalType": "int32",
+          "name": "lngE7",
+          "type": "int32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "pricePerKWhMilliUSD",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "powerKW",
+          "type": "uint16"
+        }
+      ],
+      "name": "ChargerUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferStarted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "acceptOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        }
+      ],
+      "name": "get",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "int32",
+              "name": "latE7",
+              "type": "int32"
+            },
+            {
+              "internalType": "int32",
+              "name": "lngE7",
+              "type": "int32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "pricePerKWhMilliUSD",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint16",
+              "name": "powerKW",
+              "type": "uint16"
+            },
+            {
+              "internalType": "bool",
+              "name": "active",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct ChargerRegistry.Charger",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "getChargersByOwner",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ownerOf",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pendingOwner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "int32",
+          "name": "latE7",
+          "type": "int32"
+        },
+        {
+          "internalType": "int32",
+          "name": "lngE7",
+          "type": "int32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "pricePerKWhMilliUSD",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint16",
+          "name": "powerKW",
+          "type": "uint16"
+        }
+      ],
+      "name": "registerCharger",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "active",
+          "type": "bool"
+        }
+      ],
+      "name": "setActive",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "chargerId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int32",
+          "name": "latE7",
+          "type": "int32"
+        },
+        {
+          "internalType": "int32",
+          "name": "lngE7",
+          "type": "int32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "pricePerKWhMilliUSD",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint16",
+          "name": "powerKW",
+          "type": "uint16"
+        }
+      ],
+      "name": "updateCharger",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xa9f86d77e8f75cb33ddc1518c67bfc89801f7fb7076f0aea30e0632243ca6e70",
+  "receipt": {
+    "to": null,
+    "from": "0x8771f22cC8c3d1611B060303C1FA828A9b60D973",
+    "contractAddress": "0x670cdd7e266bCcFb734BFfc0159441590412ef5a",
+    "transactionIndex": 6,
+    "gasUsed": "591017",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000800000100000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000020000000000400000000800000000000000000000000008000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000010000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x574720edbd256a040773610c10043bfefc16b7db45d895edfc5a59428929f1e0",
+    "transactionHash": "0xa9f86d77e8f75cb33ddc1518c67bfc89801f7fb7076f0aea30e0632243ca6e70",
+    "logs": [
+      {
+        "transactionIndex": 6,
+        "blockNumber": 206036052,
+        "transactionHash": "0xa9f86d77e8f75cb33ddc1518c67bfc89801f7fb7076f0aea30e0632243ca6e70",
+        "address": "0x670cdd7e266bCcFb734BFfc0159441590412ef5a",
+        "topics": [
+          "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000008771f22cc8c3d1611b060303c1fa828a9b60d973"
+        ],
+        "data": "0x",
+        "logIndex": 10,
+        "blockHash": "0x574720edbd256a040773610c10043bfefc16b7db45d895edfc5a59428929f1e0"
+      }
+    ],
+    "blockNumber": 206036052,
+    "cumulativeGasUsed": "1205478",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x8771f22cC8c3d1611B060303C1FA828A9b60D973"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "3a7117a1b08e4ac95ad2dc34adf28b9f",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"initialOwner\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"ErrAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ErrNotChargerOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ErrNotRegistered\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"}],\"name\":\"ChargerActiveSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"int32\",\"name\":\"latE7\",\"type\":\"int32\"},{\"indexed\":false,\"internalType\":\"int32\",\"name\":\"lngE7\",\"type\":\"int32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"pricePerKWhMilliUSD\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"powerKW\",\"type\":\"uint16\"}],\"name\":\"ChargerRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"int32\",\"name\":\"latE7\",\"type\":\"int32\"},{\"indexed\":false,\"internalType\":\"int32\",\"name\":\"lngE7\",\"type\":\"int32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"pricePerKWhMilliUSD\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"powerKW\",\"type\":\"uint16\"}],\"name\":\"ChargerUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"}],\"name\":\"get\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"int32\",\"name\":\"latE7\",\"type\":\"int32\"},{\"internalType\":\"int32\",\"name\":\"lngE7\",\"type\":\"int32\"},{\"internalType\":\"uint32\",\"name\":\"pricePerKWhMilliUSD\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"powerKW\",\"type\":\"uint16\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"}],\"internalType\":\"struct ChargerRegistry.Charger\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"getChargersByOwner\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pendingOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"int32\",\"name\":\"latE7\",\"type\":\"int32\"},{\"internalType\":\"int32\",\"name\":\"lngE7\",\"type\":\"int32\"},{\"internalType\":\"uint32\",\"name\":\"pricePerKWhMilliUSD\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"powerKW\",\"type\":\"uint16\"}],\"name\":\"registerCharger\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"}],\"name\":\"setActive\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chargerId\",\"type\":\"uint256\"},{\"internalType\":\"int32\",\"name\":\"latE7\",\"type\":\"int32\"},{\"internalType\":\"int32\",\"name\":\"lngE7\",\"type\":\"int32\"},{\"internalType\":\"uint32\",\"name\":\"pricePerKWhMilliUSD\",\"type\":\"uint32\"},{\"internalType\":\"uint16\",\"name\":\"powerKW\",\"type\":\"uint16\"}],\"name\":\"updateCharger\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"errors\":{\"OwnableInvalidOwner(address)\":[{\"details\":\"The owner is not a valid owner account. (eg. `address(0)`)\"}],\"OwnableUnauthorizedAccount(address)\":[{\"details\":\"The caller account is not authorized to perform an operation.\"}]},\"kind\":\"dev\",\"methods\":{\"acceptOwnership()\":{\"details\":\"The new owner accepts the ownership transfer.\"},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"pendingOwner()\":{\"details\":\"Returns the address of the pending owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner.\"},\"transferOwnership(address)\":{\"details\":\"Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one. Can only be called by the current owner.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"get(uint256)\":{\"notice\":\"Returns full charger struct, reverts if not registered\"},\"getChargersByOwner(address)\":{\"notice\":\"Returns all charger IDs owned by a specific address\"},\"ownerOf(uint256)\":{\"notice\":\"Returns the owner of a charger, or address(0) if not registered\"},\"registerCharger(uint256,address,int32,int32,uint32,uint16)\":{\"notice\":\"Registers a new charger, anyone can register\"},\"setActive(uint256,bool)\":{\"notice\":\"Activates/deactivates charger, only by charger owner\"},\"updateCharger(uint256,int32,int32,uint32,uint16)\":{\"notice\":\"Updates charger details, only by charger owner\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/ChargerRegistry.sol\":\"ChargerRegistry\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@openzeppelin/contracts/access/Ownable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {Context} from \\\"../utils/Context.sol\\\";\\n\\n/**\\n * @dev Contract module which provides a basic access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * The initial owner is set to the address provided by the deployer. This can\\n * later be changed with {transferOwnership}.\\n *\\n * This module is used through inheritance. It will make available the modifier\\n * `onlyOwner`, which can be applied to your functions to restrict their use to\\n * the owner.\\n */\\nabstract contract Ownable is Context {\\n    address private _owner;\\n\\n    /**\\n     * @dev The caller account is not authorized to perform an operation.\\n     */\\n    error OwnableUnauthorizedAccount(address account);\\n\\n    /**\\n     * @dev The owner is not a valid owner account. (eg. `address(0)`)\\n     */\\n    error OwnableInvalidOwner(address owner);\\n\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Initializes the contract setting the address provided by the deployer as the initial owner.\\n     */\\n    constructor(address initialOwner) {\\n        if (initialOwner == address(0)) {\\n            revert OwnableInvalidOwner(address(0));\\n        }\\n        _transferOwnership(initialOwner);\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        _checkOwner();\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view virtual returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Throws if the sender is not the owner.\\n     */\\n    function _checkOwner() internal view virtual {\\n        if (owner() != _msgSender()) {\\n            revert OwnableUnauthorizedAccount(_msgSender());\\n        }\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby disabling any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() public virtual onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\n        if (newOwner == address(0)) {\\n            revert OwnableInvalidOwner(address(0));\\n        }\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual {\\n        address oldOwner = _owner;\\n        _owner = newOwner;\\n        emit OwnershipTransferred(oldOwner, newOwner);\\n    }\\n}\\n\",\"keccak256\":\"0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb\",\"license\":\"MIT\"},\"@openzeppelin/contracts/access/Ownable2Step.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable2Step.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {Ownable} from \\\"./Ownable.sol\\\";\\n\\n/**\\n * @dev Contract module which provides access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * The initial owner is specified at deployment time in the constructor for `Ownable`. This\\n * can later be changed with {transferOwnership} and {acceptOwnership}.\\n *\\n * This module is used through inheritance. It will make available all functions\\n * from parent (Ownable).\\n */\\nabstract contract Ownable2Step is Ownable {\\n    address private _pendingOwner;\\n\\n    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Returns the address of the pending owner.\\n     */\\n    function pendingOwner() public view virtual returns (address) {\\n        return _pendingOwner;\\n    }\\n\\n    /**\\n     * @dev Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one.\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual override onlyOwner {\\n        _pendingOwner = newOwner;\\n        emit OwnershipTransferStarted(owner(), newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`) and deletes any pending owner.\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual override {\\n        delete _pendingOwner;\\n        super._transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev The new owner accepts the ownership transfer.\\n     */\\n    function acceptOwnership() public virtual {\\n        address sender = _msgSender();\\n        if (pendingOwner() != sender) {\\n            revert OwnableUnauthorizedAccount(sender);\\n        }\\n        _transferOwnership(sender);\\n    }\\n}\\n\",\"keccak256\":\"0x5d3e5de9eadfa1f8a892eb2e95bbebd3e4b8c8ada5b76f104d383fea518fa688\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Context.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract Context {\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    function _contextSuffixLength() internal view virtual returns (uint256) {\\n        return 0;\\n    }\\n}\\n\",\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\"},\"contracts/ChargerRegistry.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.20;\\n\\nimport \\\"@openzeppelin/contracts/access/Ownable2Step.sol\\\";\\n\\ncontract ChargerRegistry is Ownable2Step {\\n    struct Charger {\\n        address owner;\\n        int32 latE7;\\n        int32 lngE7;\\n        uint32 pricePerKWhMilliUSD; // 1 USD = 1000 milliUSD\\n        uint16 powerKW;\\n        bool active;\\n    }\\n\\n    // chargerId -> Charger\\n    mapping(uint256 => Charger) private _chargers;\\n    \\n    // owner -> array of charger IDs\\n    mapping(address => uint256[]) private _ownerChargers;\\n\\n    // Errors\\n    error ErrNotChargerOwner();\\n    error ErrAlreadyRegistered();\\n    error ErrNotRegistered();\\n\\n    // Events\\n    event ChargerRegistered(\\n        uint256 indexed chargerId,\\n        address indexed owner,\\n        int32 latE7,\\n        int32 lngE7,\\n        uint32 pricePerKWhMilliUSD,\\n        uint16 powerKW\\n    );\\n    event ChargerUpdated(\\n        uint256 indexed chargerId,\\n        int32 latE7,\\n        int32 lngE7,\\n        uint32 pricePerKWhMilliUSD,\\n        uint16 powerKW\\n    );\\n    event ChargerActiveSet(uint256 indexed chargerId, bool active);\\n\\n    constructor(address initialOwner) Ownable(initialOwner) {}\\n\\n    /// @notice Registers a new charger, anyone can register\\n    function registerCharger(\\n        uint256 chargerId,\\n        address owner,\\n        int32 latE7,\\n        int32 lngE7,\\n        uint32 pricePerKWhMilliUSD,\\n        uint16 powerKW\\n    ) external {\\n        if (_chargers[chargerId].owner != address(0)) revert ErrAlreadyRegistered();\\n        _chargers[chargerId] = Charger({\\n            owner: owner,\\n            latE7: latE7,\\n            lngE7: lngE7,\\n            pricePerKWhMilliUSD: pricePerKWhMilliUSD,\\n            powerKW: powerKW,\\n            active: true\\n        });\\n        _ownerChargers[owner].push(chargerId);\\n        emit ChargerRegistered(chargerId, owner, latE7, lngE7, pricePerKWhMilliUSD, powerKW);\\n    }\\n\\n    /// @notice Updates charger details, only by charger owner\\n    function updateCharger(\\n        uint256 chargerId,\\n        int32 latE7,\\n        int32 lngE7,\\n        uint32 pricePerKWhMilliUSD,\\n        uint16 powerKW\\n    ) external {\\n        Charger storage c = _chargers[chargerId];\\n        if (c.owner == address(0)) revert ErrNotRegistered();\\n        if (c.owner != msg.sender) revert ErrNotChargerOwner();\\n        c.latE7 = latE7;\\n        c.lngE7 = lngE7;\\n        c.pricePerKWhMilliUSD = pricePerKWhMilliUSD;\\n        c.powerKW = powerKW;\\n        emit ChargerUpdated(chargerId, latE7, lngE7, pricePerKWhMilliUSD, powerKW);\\n    }\\n\\n    /// @notice Activates/deactivates charger, only by charger owner\\n    function setActive(uint256 chargerId, bool active) external {\\n        Charger storage c = _chargers[chargerId];\\n        if (c.owner == address(0)) revert ErrNotRegistered();\\n        if (c.owner != msg.sender) revert ErrNotChargerOwner();\\n        c.active = active;\\n        emit ChargerActiveSet(chargerId, active);\\n    }\\n\\n    /// @notice Returns the owner of a charger, or address(0) if not registered\\n    function ownerOf(uint256 chargerId) external view returns (address) {\\n        return _chargers[chargerId].owner;\\n    }\\n\\n    /// @notice Returns full charger struct, reverts if not registered\\n    function get(uint256 chargerId) external view returns (Charger memory) {\\n        Charger memory c = _chargers[chargerId];\\n        if (c.owner == address(0)) revert ErrNotRegistered();\\n        return c;\\n    }\\n\\n    /// @notice Returns all charger IDs owned by a specific address\\n    function getChargersByOwner(address owner) external view returns (uint256[] memory) {\\n        return _ownerChargers[owner];\\n    }\\n}\\n\",\"keccak256\":\"0x680d6a67f23af23b75bd8c3a227545db23f5513b6439dd3a228bbb893264301e\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080346100c457601f610a0f38819003918201601f19168301916001600160401b038311848410176100c9578084926020946040528339810103126100c457516001600160a01b0390818116908190036100c45780156100ab5760018060a01b0319918260015416600155816000549384161760005560405192167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0600080a361092f90816100e08239f35b604051631e4fbdf760e01b815260006004820152602490fd5b600080fd5b634e487b7160e01b600052604160045260246000fdfe608060408181526004908136101561001657600080fd5b600092833560e01c90816325bc41161461079a575080636352211e14610767578063715018a6146107025780637809d475146104b757806379ba5097146104365780638da5cb5b1461040e5780639507d39a14610310578063e30c3978146102e3578063e60a955d1461024d578063f2fde38b146101dd5763f81316b91461009d57600080fd5b346101d95760a03660031901126101d957813591602435908160030b82036101d5576100c761088b565b926064359063ffffffff821682036101d1576084359261ffff8416908185036101cd57878952600260205282892080549091906001600160a01b031680156101be5733036101b0575080546001600160e01b031960e086901b166001600160a01b0390911660a088901b63ffffffff60a01b161760c089901b63ffffffff60c01b1617178155600101805461ffff1916909117905551600393840b81529390920b602084015263ffffffff909116604083015261ffff1660608201527fca4efd182d72529450d07d1ea2ec5ef91d39884e12758ce19e6bfe1e182b7c309080608081010390a280f35b8351630471b8bf60e41b8152fd5b50835163b93191b360e01b8152fd5b8880fd5b8680fd5b8480fd5b8280fd5b833461024a57602036600319011261024a576101f7610870565b6101ff61089b565b600180546001600160a01b0319166001600160a01b0392831690811790915582549091167f38d16b8cac22d99fc7c124b9cd0de2d3fa1faef420bfe791d8c362d765e227008380a380f35b80fd5b5090346101d957816003193601126101d957803591602435801515928382036102df57848652600260205282862080549091906001600160a01b031680156101be5733036101b05750600101805462ff0000191691151560101b62ff0000169190911790557f8b0e9dd10a03d9983d0489ceb898e12156f0828353af1268970f6b6eb2aa49979160209151908152a280f35b8580fd5b83823461030c578160031936011261030c5760015490516001600160a01b039091168152602090f35b5080fd5b50823461024a57602036600319011261024a5780829160a08351610333816108c7565b828152826020820152828582015282606082015282608082015201528335815260026020522090805191610366836108c7565b80549360018060a01b039283861692838652602086018760a01c60030b81526001838801928960c01c60030b8452606089019960e01c8a52015495608088019461ffff96878916875260ff60a08b019960101c161515895215610400575091839160c0999363ffffffff955199511689525160030b60208901525160030b90870152511660608501525116608083015251151560a0820152f35b845163b93191b360e01b8152fd5b83823461030c578160031936011261030c57905490516001600160a01b039091168152602090f35b50346101d957826003193601126101d957600154916001600160a01b039133838516036104a05750506001600160a01b031991821660015582543392811683178455167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08380a380f35b60249250519063118cdaa760e01b82523390820152fd5b5082903461030c5760c036600319011261030c576024356001600160a01b03818116928535928490036101d5576104ec61088b565b90606435928360030b918285036106fe576084359163ffffffff93848416948585036106fa5760a4359561ffff92838816948589036106f65780878f8e815260026020522054166106e657918b9493918a8f948f958a9081519761054f896108c7565b8852602088019360030b845281880194855260608801958652608088019a8b5260a088019960018b5281526002602052209551166bffffffffffffffffffffffff60a01b8654161785555160030b6105c290859081549060a01b63ffffffff60a01b169063ffffffff60a01b1916179055565b51835460c09190911b63ffffffff60c01b1663ffffffff60c01b199091161783555182546001600160e01b0316911660e01b6001600160e01b03191617815560010192511661ffff19835416178255511515610632919062ff0000825491151560101b169062ff00001916179055565b8688526003602052808820805490680100000000000000008210156106d357600182018082558210156106c05789526020808a20919091018790559051600394850b81529490930b9284019290925263ffffffff909116604083015261ffff1660608201527fe9815cdf4e9fb14c4011ce7c220b9799f37aed601bb09ca66877cad77dbb0e1590608090a380f35b634e487b7160e01b8a5260328b5260248afd5b634e487b7160e01b8a5260418b5260248afd5b865163097e743960e31b81528f90fd5b8d80fd5b8a80fd5b8780fd5b833461024a578060031936011261024a5761071b61089b565b600180546001600160a01b03199081169091558154908116825581906001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08280a380f35b5090346101d95760203660031901126101d95735825260026020908152918190205490516001600160a01b039091168152f35b9050833461024a576020908160031936011261024a576001600160a01b036107c0610870565b16815260038252838120938454808552838501908196845284842090845b8682821061085c5750505050849003601f01601f191684019567ffffffffffffffff871185881017610849575085815282865292518583018190528594938501939290915b82811061083257505050500390f35b835185528695509381019392810192600101610823565b634e487b7160e01b835260419052602482fd5b8354855290930192600192830192016107de565b600435906001600160a01b038216820361088657565b600080fd5b604435908160030b820361088657565b6000546001600160a01b031633036108af57565b60405163118cdaa760e01b8152336004820152602490fd5b60c0810190811067ffffffffffffffff8211176108e357604052565b634e487b7160e01b600052604160045260246000fdfea2646970667358221220b8022330660e50d1d9a5a672ebd4ec5d9172599c1cfd82db5b54b32fe63ad37a64736f6c63430008140033",
+  "deployedBytecode": "0x608060408181526004908136101561001657600080fd5b600092833560e01c90816325bc41161461079a575080636352211e14610767578063715018a6146107025780637809d475146104b757806379ba5097146104365780638da5cb5b1461040e5780639507d39a14610310578063e30c3978146102e3578063e60a955d1461024d578063f2fde38b146101dd5763f81316b91461009d57600080fd5b346101d95760a03660031901126101d957813591602435908160030b82036101d5576100c761088b565b926064359063ffffffff821682036101d1576084359261ffff8416908185036101cd57878952600260205282892080549091906001600160a01b031680156101be5733036101b0575080546001600160e01b031960e086901b166001600160a01b0390911660a088901b63ffffffff60a01b161760c089901b63ffffffff60c01b1617178155600101805461ffff1916909117905551600393840b81529390920b602084015263ffffffff909116604083015261ffff1660608201527fca4efd182d72529450d07d1ea2ec5ef91d39884e12758ce19e6bfe1e182b7c309080608081010390a280f35b8351630471b8bf60e41b8152fd5b50835163b93191b360e01b8152fd5b8880fd5b8680fd5b8480fd5b8280fd5b833461024a57602036600319011261024a576101f7610870565b6101ff61089b565b600180546001600160a01b0319166001600160a01b0392831690811790915582549091167f38d16b8cac22d99fc7c124b9cd0de2d3fa1faef420bfe791d8c362d765e227008380a380f35b80fd5b5090346101d957816003193601126101d957803591602435801515928382036102df57848652600260205282862080549091906001600160a01b031680156101be5733036101b05750600101805462ff0000191691151560101b62ff0000169190911790557f8b0e9dd10a03d9983d0489ceb898e12156f0828353af1268970f6b6eb2aa49979160209151908152a280f35b8580fd5b83823461030c578160031936011261030c5760015490516001600160a01b039091168152602090f35b5080fd5b50823461024a57602036600319011261024a5780829160a08351610333816108c7565b828152826020820152828582015282606082015282608082015201528335815260026020522090805191610366836108c7565b80549360018060a01b039283861692838652602086018760a01c60030b81526001838801928960c01c60030b8452606089019960e01c8a52015495608088019461ffff96878916875260ff60a08b019960101c161515895215610400575091839160c0999363ffffffff955199511689525160030b60208901525160030b90870152511660608501525116608083015251151560a0820152f35b845163b93191b360e01b8152fd5b83823461030c578160031936011261030c57905490516001600160a01b039091168152602090f35b50346101d957826003193601126101d957600154916001600160a01b039133838516036104a05750506001600160a01b031991821660015582543392811683178455167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08380a380f35b60249250519063118cdaa760e01b82523390820152fd5b5082903461030c5760c036600319011261030c576024356001600160a01b03818116928535928490036101d5576104ec61088b565b90606435928360030b918285036106fe576084359163ffffffff93848416948585036106fa5760a4359561ffff92838816948589036106f65780878f8e815260026020522054166106e657918b9493918a8f948f958a9081519761054f896108c7565b8852602088019360030b845281880194855260608801958652608088019a8b5260a088019960018b5281526002602052209551166bffffffffffffffffffffffff60a01b8654161785555160030b6105c290859081549060a01b63ffffffff60a01b169063ffffffff60a01b1916179055565b51835460c09190911b63ffffffff60c01b1663ffffffff60c01b199091161783555182546001600160e01b0316911660e01b6001600160e01b03191617815560010192511661ffff19835416178255511515610632919062ff0000825491151560101b169062ff00001916179055565b8688526003602052808820805490680100000000000000008210156106d357600182018082558210156106c05789526020808a20919091018790559051600394850b81529490930b9284019290925263ffffffff909116604083015261ffff1660608201527fe9815cdf4e9fb14c4011ce7c220b9799f37aed601bb09ca66877cad77dbb0e1590608090a380f35b634e487b7160e01b8a5260328b5260248afd5b634e487b7160e01b8a5260418b5260248afd5b865163097e743960e31b81528f90fd5b8d80fd5b8a80fd5b8780fd5b833461024a578060031936011261024a5761071b61089b565b600180546001600160a01b03199081169091558154908116825581906001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08280a380f35b5090346101d95760203660031901126101d95735825260026020908152918190205490516001600160a01b039091168152f35b9050833461024a576020908160031936011261024a576001600160a01b036107c0610870565b16815260038252838120938454808552838501908196845284842090845b8682821061085c5750505050849003601f01601f191684019567ffffffffffffffff871185881017610849575085815282865292518583018190528594938501939290915b82811061083257505050500390f35b835185528695509381019392810192600101610823565b634e487b7160e01b835260419052602482fd5b8354855290930192600192830192016107de565b600435906001600160a01b038216820361088657565b600080fd5b604435908160030b820361088657565b6000546001600160a01b031633036108af57565b60405163118cdaa760e01b8152336004820152602490fd5b60c0810190811067ffffffffffffffff8211176108e357604052565b634e487b7160e01b600052604160045260246000fdfea2646970667358221220b8022330660e50d1d9a5a672ebd4ec5d9172599c1cfd82db5b54b32fe63ad37a64736f6c63430008140033",
+  "devdoc": {
+    "errors": {
+      "OwnableInvalidOwner(address)": [
+        {
+          "details": "The owner is not a valid owner account. (eg. `address(0)`)"
+        }
+      ],
+      "OwnableUnauthorizedAccount(address)": [
+        {
+          "details": "The caller account is not authorized to perform an operation."
+        }
+      ]
+    },
+    "kind": "dev",
+    "methods": {
+      "acceptOwnership()": {
+        "details": "The new owner accepts the ownership transfer."
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "pendingOwner()": {
+        "details": "Returns the address of the pending owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner."
+      },
+      "transferOwnership(address)": {
+        "details": "Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one. Can only be called by the current owner."
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "get(uint256)": {
+        "notice": "Returns full charger struct, reverts if not registered"
+      },
+      "getChargersByOwner(address)": {
+        "notice": "Returns all charger IDs owned by a specific address"
+      },
+      "ownerOf(uint256)": {
+        "notice": "Returns the owner of a charger, or address(0) if not registered"
+      },
+      "registerCharger(uint256,address,int32,int32,uint32,uint16)": {
+        "notice": "Registers a new charger, anyone can register"
+      },
+      "setActive(uint256,bool)": {
+        "notice": "Activates/deactivates charger, only by charger owner"
+      },
+      "updateCharger(uint256,int32,int32,uint32,uint16)": {
+        "notice": "Updates charger details, only by charger owner"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 8,
+        "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 156,
+        "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+        "label": "_pendingOwner",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 4327,
+        "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+        "label": "_chargers",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_uint256,t_struct(Charger)4322_storage)"
+      },
+      {
+        "astId": 4332,
+        "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+        "label": "_ownerChargers",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)dyn_storage": {
+        "base": "t_uint256",
+        "encoding": "dynamic_array",
+        "label": "uint256[]",
+        "numberOfBytes": "32"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_int32": {
+        "encoding": "inplace",
+        "label": "int32",
+        "numberOfBytes": "4"
+      },
+      "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => uint256[])",
+        "numberOfBytes": "32",
+        "value": "t_array(t_uint256)dyn_storage"
+      },
+      "t_mapping(t_uint256,t_struct(Charger)4322_storage)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => struct ChargerRegistry.Charger)",
+        "numberOfBytes": "32",
+        "value": "t_struct(Charger)4322_storage"
+      },
+      "t_struct(Charger)4322_storage": {
+        "encoding": "inplace",
+        "label": "struct ChargerRegistry.Charger",
+        "members": [
+          {
+            "astId": 4311,
+            "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+            "label": "owner",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address"
+          },
+          {
+            "astId": 4313,
+            "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+            "label": "latE7",
+            "offset": 20,
+            "slot": "0",
+            "type": "t_int32"
+          },
+          {
+            "astId": 4315,
+            "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+            "label": "lngE7",
+            "offset": 24,
+            "slot": "0",
+            "type": "t_int32"
+          },
+          {
+            "astId": 4317,
+            "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+            "label": "pricePerKWhMilliUSD",
+            "offset": 28,
+            "slot": "0",
+            "type": "t_uint32"
+          },
+          {
+            "astId": 4319,
+            "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+            "label": "powerKW",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint16"
+          },
+          {
+            "astId": 4321,
+            "contract": "contracts/ChargerRegistry.sol:ChargerRegistry",
+            "label": "active",
+            "offset": 2,
+            "slot": "1",
+            "type": "t_bool"
+          }
+        ],
+        "numberOfBytes": "64"
+      },
+      "t_uint16": {
+        "encoding": "inplace",
+        "label": "uint16",
+        "numberOfBytes": "2"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint32": {
+        "encoding": "inplace",
+        "label": "uint32",
+        "numberOfBytes": "4"
+      }
+    }
+  }
+}

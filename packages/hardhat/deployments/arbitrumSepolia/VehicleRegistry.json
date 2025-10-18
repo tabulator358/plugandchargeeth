@@ -1,0 +1,591 @@
+{
+  "address": "0x6472BE14D12aeF0987da866E45132Da68B01384d",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "initialOwner",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "ErrAlreadyRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ErrChipAlreadyRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ErrNotDriver",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ErrNotRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableInvalidOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferStarted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "driver",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "chipId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "iso15118Enabled",
+          "type": "bool"
+        }
+      ],
+      "name": "VehicleRegistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "driver",
+          "type": "address"
+        }
+      ],
+      "name": "VehicleUnregistered",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "acceptOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getIso15118Identifier",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getPublicKey",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "chipId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getVehicleByChip",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "iso15118Identifier",
+          "type": "string"
+        }
+      ],
+      "name": "getVehicleByIso15118Identifier",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "isIso15118Enabled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ownerOfVehicle",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "pendingOwner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "chipId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bool",
+          "name": "iso15118Enabled",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "publicKeyHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "iso15118Identifier",
+          "type": "string"
+        }
+      ],
+      "name": "registerVehicle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "vehicleHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "unregisterVehicle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xd16b9be0f0c2252ca909ccf200fe9dba1149d4ee2a5e8ccb23a82fd508fee81f",
+  "receipt": {
+    "to": null,
+    "from": "0x8771f22cC8c3d1611B060303C1FA828A9b60D973",
+    "contractAddress": "0x6472BE14D12aeF0987da866E45132Da68B01384d",
+    "transactionIndex": 1,
+    "gasUsed": "572296",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000800000100000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000020000000000000000000802000000000000000800000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000010000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x4832a2d411aaf350aa2ab57840d35a85ea3657efb66e047f3bd61fed578b70ac",
+    "transactionHash": "0xd16b9be0f0c2252ca909ccf200fe9dba1149d4ee2a5e8ccb23a82fd508fee81f",
+    "logs": [
+      {
+        "transactionIndex": 1,
+        "blockNumber": 206036046,
+        "transactionHash": "0xd16b9be0f0c2252ca909ccf200fe9dba1149d4ee2a5e8ccb23a82fd508fee81f",
+        "address": "0x6472BE14D12aeF0987da866E45132Da68B01384d",
+        "topics": [
+          "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000008771f22cc8c3d1611b060303c1fa828a9b60d973"
+        ],
+        "data": "0x",
+        "logIndex": 0,
+        "blockHash": "0x4832a2d411aaf350aa2ab57840d35a85ea3657efb66e047f3bd61fed578b70ac"
+      }
+    ],
+    "blockNumber": 206036046,
+    "cumulativeGasUsed": "572296",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x8771f22cC8c3d1611B060303C1FA828A9b60D973"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "3a7117a1b08e4ac95ad2dc34adf28b9f",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"initialOwner\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"ErrAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ErrChipAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ErrNotDriver\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ErrNotRegistered\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"driver\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"chipId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"iso15118Enabled\",\"type\":\"bool\"}],\"name\":\"VehicleRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"driver\",\"type\":\"address\"}],\"name\":\"VehicleUnregistered\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"}],\"name\":\"getIso15118Identifier\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"}],\"name\":\"getPublicKey\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"chipId\",\"type\":\"bytes32\"}],\"name\":\"getVehicleByChip\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"iso15118Identifier\",\"type\":\"string\"}],\"name\":\"getVehicleByIso15118Identifier\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"}],\"name\":\"isIso15118Enabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"}],\"name\":\"ownerOfVehicle\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pendingOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"chipId\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"iso15118Enabled\",\"type\":\"bool\"},{\"internalType\":\"bytes32\",\"name\":\"publicKeyHash\",\"type\":\"bytes32\"},{\"internalType\":\"string\",\"name\":\"iso15118Identifier\",\"type\":\"string\"}],\"name\":\"registerVehicle\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"vehicleHash\",\"type\":\"bytes32\"}],\"name\":\"unregisterVehicle\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"errors\":{\"OwnableInvalidOwner(address)\":[{\"details\":\"The owner is not a valid owner account. (eg. `address(0)`)\"}],\"OwnableUnauthorizedAccount(address)\":[{\"details\":\"The caller account is not authorized to perform an operation.\"}]},\"kind\":\"dev\",\"methods\":{\"acceptOwnership()\":{\"details\":\"The new owner accepts the ownership transfer.\"},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"pendingOwner()\":{\"details\":\"Returns the address of the pending owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner.\"},\"transferOwnership(address)\":{\"details\":\"Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one. Can only be called by the current owner.\"}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getIso15118Identifier(bytes32)\":{\"notice\":\"Returns ISO 15118 identifier for a vehicle\"},\"getPublicKey(bytes32)\":{\"notice\":\"Returns public key hash for a vehicle\"},\"getVehicleByChip(bytes32)\":{\"notice\":\"Returns vehicle hash by chip ID\"},\"getVehicleByIso15118Identifier(string)\":{\"notice\":\"Returns vehicle hash for a given ISO 15118 identifier\"},\"isIso15118Enabled(bytes32)\":{\"notice\":\"Returns if ISO 15118 is enabled for a vehicle\"},\"ownerOfVehicle(bytes32)\":{\"notice\":\"Returns the owner (driver) of a vehicle, or address(0) if not registered\"},\"registerVehicle(bytes32,bytes32,bool,bytes32,string)\":{\"notice\":\"Registers a vehicle with chip and ISO 15118 support\"},\"unregisterVehicle(bytes32)\":{\"notice\":\"Unregisters a vehicle, only current driver\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/VehicleRegistry.sol\":\"VehicleRegistry\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@openzeppelin/contracts/access/Ownable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {Context} from \\\"../utils/Context.sol\\\";\\n\\n/**\\n * @dev Contract module which provides a basic access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * The initial owner is set to the address provided by the deployer. This can\\n * later be changed with {transferOwnership}.\\n *\\n * This module is used through inheritance. It will make available the modifier\\n * `onlyOwner`, which can be applied to your functions to restrict their use to\\n * the owner.\\n */\\nabstract contract Ownable is Context {\\n    address private _owner;\\n\\n    /**\\n     * @dev The caller account is not authorized to perform an operation.\\n     */\\n    error OwnableUnauthorizedAccount(address account);\\n\\n    /**\\n     * @dev The owner is not a valid owner account. (eg. `address(0)`)\\n     */\\n    error OwnableInvalidOwner(address owner);\\n\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Initializes the contract setting the address provided by the deployer as the initial owner.\\n     */\\n    constructor(address initialOwner) {\\n        if (initialOwner == address(0)) {\\n            revert OwnableInvalidOwner(address(0));\\n        }\\n        _transferOwnership(initialOwner);\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        _checkOwner();\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view virtual returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Throws if the sender is not the owner.\\n     */\\n    function _checkOwner() internal view virtual {\\n        if (owner() != _msgSender()) {\\n            revert OwnableUnauthorizedAccount(_msgSender());\\n        }\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby disabling any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() public virtual onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\n        if (newOwner == address(0)) {\\n            revert OwnableInvalidOwner(address(0));\\n        }\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual {\\n        address oldOwner = _owner;\\n        _owner = newOwner;\\n        emit OwnershipTransferred(oldOwner, newOwner);\\n    }\\n}\\n\",\"keccak256\":\"0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb\",\"license\":\"MIT\"},\"@openzeppelin/contracts/access/Ownable2Step.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable2Step.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {Ownable} from \\\"./Ownable.sol\\\";\\n\\n/**\\n * @dev Contract module which provides access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * The initial owner is specified at deployment time in the constructor for `Ownable`. This\\n * can later be changed with {transferOwnership} and {acceptOwnership}.\\n *\\n * This module is used through inheritance. It will make available all functions\\n * from parent (Ownable).\\n */\\nabstract contract Ownable2Step is Ownable {\\n    address private _pendingOwner;\\n\\n    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Returns the address of the pending owner.\\n     */\\n    function pendingOwner() public view virtual returns (address) {\\n        return _pendingOwner;\\n    }\\n\\n    /**\\n     * @dev Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one.\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual override onlyOwner {\\n        _pendingOwner = newOwner;\\n        emit OwnershipTransferStarted(owner(), newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`) and deletes any pending owner.\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual override {\\n        delete _pendingOwner;\\n        super._transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev The new owner accepts the ownership transfer.\\n     */\\n    function acceptOwnership() public virtual {\\n        address sender = _msgSender();\\n        if (pendingOwner() != sender) {\\n            revert OwnableUnauthorizedAccount(sender);\\n        }\\n        _transferOwnership(sender);\\n    }\\n}\\n\",\"keccak256\":\"0x5d3e5de9eadfa1f8a892eb2e95bbebd3e4b8c8ada5b76f104d383fea518fa688\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Context.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract Context {\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    function _contextSuffixLength() internal view virtual returns (uint256) {\\n        return 0;\\n    }\\n}\\n\",\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\"},\"contracts/VehicleRegistry.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.20;\\n\\nimport \\\"@openzeppelin/contracts/access/Ownable2Step.sol\\\";\\n\\ncontract VehicleRegistry is Ownable2Step {\\n    // Mapping vehicleHash -> driver address\\n    mapping(bytes32 => address) private _vehicleOwners;\\n    \\n    // Mapping chipId -> vehicleHash (for quick lookup)\\n    mapping(bytes32 => bytes32) private _chipToVehicle;\\n    \\n    // Mapping vehicleHash -> ISO 15118 enabled\\n    mapping(bytes32 => bool) private _iso15118Enabled;\\n    \\n    // Mapping vehicleHash -> public key hash\\n    mapping(bytes32 => bytes32) private _publicKeys;\\n    \\n    // Mapping vehicleHash -> ISO 15118 identifier string\\n    mapping(bytes32 => string) private _iso15118Identifiers;\\n    \\n    // Mapping ISO 15118 identifier string -> vehicleHash (reverse lookup)\\n    mapping(string => bytes32) private _iso15118ToVehicle;\\n\\n    // Errors\\n    error ErrNotDriver();\\n    error ErrAlreadyRegistered();\\n    error ErrChipAlreadyRegistered();\\n    error ErrNotRegistered();\\n\\n    // Events\\n    event VehicleRegistered(bytes32 indexed vehicleHash, address indexed driver, bytes32 chipId, bool iso15118Enabled);\\n    event VehicleUnregistered(bytes32 indexed vehicleHash, address indexed driver);\\n\\n    constructor(address initialOwner) Ownable(initialOwner) {}\\n\\n    /// @notice Registers a vehicle with chip and ISO 15118 support\\n    function registerVehicle(bytes32 vehicleHash, bytes32 chipId, bool iso15118Enabled, bytes32 publicKeyHash, string memory iso15118Identifier) external {\\n        if (_vehicleOwners[vehicleHash] != address(0)) revert ErrAlreadyRegistered();\\n        if (_chipToVehicle[chipId] != bytes32(0)) revert ErrChipAlreadyRegistered();\\n        \\n        _vehicleOwners[vehicleHash] = msg.sender;\\n        _chipToVehicle[chipId] = vehicleHash;\\n        _iso15118Enabled[vehicleHash] = iso15118Enabled;\\n        _publicKeys[vehicleHash] = publicKeyHash;\\n        _iso15118Identifiers[vehicleHash] = iso15118Identifier;\\n        \\n        // Store reverse lookup for ISO-15118 identifier\\n        if (bytes(iso15118Identifier).length > 0) {\\n            _iso15118ToVehicle[iso15118Identifier] = vehicleHash;\\n        }\\n        \\n        emit VehicleRegistered(vehicleHash, msg.sender, chipId, iso15118Enabled);\\n    }\\n\\n    /// @notice Unregisters a vehicle, only current driver\\n    function unregisterVehicle(bytes32 vehicleHash) external {\\n        address driver = _vehicleOwners[vehicleHash];\\n        if (driver == address(0)) revert ErrNotRegistered();\\n        if (driver != msg.sender) revert ErrNotDriver();\\n        delete _vehicleOwners[vehicleHash];\\n        emit VehicleUnregistered(vehicleHash, driver);\\n    }\\n\\n    /// @notice Returns the owner (driver) of a vehicle, or address(0) if not registered\\n    function ownerOfVehicle(bytes32 vehicleHash) external view returns (address) {\\n        return _vehicleOwners[vehicleHash];\\n    }\\n\\n    /// @notice Returns vehicle hash by chip ID\\n    function getVehicleByChip(bytes32 chipId) external view returns (bytes32) {\\n        return _chipToVehicle[chipId];\\n    }\\n\\n    /// @notice Returns if ISO 15118 is enabled for a vehicle\\n    function isIso15118Enabled(bytes32 vehicleHash) external view returns (bool) {\\n        return _iso15118Enabled[vehicleHash];\\n    }\\n\\n    /// @notice Returns public key hash for a vehicle\\n    function getPublicKey(bytes32 vehicleHash) external view returns (bytes32) {\\n        return _publicKeys[vehicleHash];\\n    }\\n    \\n    /// @notice Returns ISO 15118 identifier for a vehicle\\n    function getIso15118Identifier(bytes32 vehicleHash) external view returns (string memory) {\\n        return _iso15118Identifiers[vehicleHash];\\n    }\\n    \\n    /// @notice Returns vehicle hash for a given ISO 15118 identifier\\n    function getVehicleByIso15118Identifier(string memory iso15118Identifier) external view returns (bytes32) {\\n        return _iso15118ToVehicle[iso15118Identifier];\\n    }\\n}\\n\",\"keccak256\":\"0xa449a759d99927f00f99ab796d9bd66c46154252e16bde6d582e2d5502cb341c\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080346100c457601f6109b838819003918201601f19168301916001600160401b038311848410176100c9578084926020946040528339810103126100c457516001600160a01b0390818116908190036100c45780156100ab5760018060a01b0319918260015416600155816000549384161760005560405192167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0600080a36108d890816100e08239f35b604051631e4fbdf760e01b815260006004820152602490fd5b600080fd5b634e487b7160e01b600052604160045260246000fdfe608060408181526004908136101561001657600080fd5b600092833560e01c9081633e9afaae1461075857508063708d39961461066d578063715018a61461060857806379ba5097146105875780638ac9727b146105545780638da5cb5b1461052c578063b1c551ca14610504578063bc63af1a146104a4578063be6adde21461047c578063e30c397814610453578063e5f99204146101bb578063f2fde38b1461014c5763f8523351146100b357600080fd5b346101485760203660031901126101485781358084526002602052818420546001600160a01b031692909190831561013a5733840361012c57508184526002602052832080546001600160a01b03191690557fe9b4dd735ff047d802eda986a0e7c33018cf3c0a5949000dcbcb0e662d6faf8c8380a380f35b905163047c15ff60e21b8152fd5b905163b93191b360e01b8152fd5b8280fd5b5050346101b75760203660031901126101b757356001600160a01b03818116918290036101485761017b61083c565b600180546001600160a01b031916831790558254167f38d16b8cac22d99fc7c124b9cd0de2d3fa1faef420bfe791d8c362d765e227008380a380f35b5080fd5b5090346101485760a0366003190112610148578035906024359260443580151580910361044f5767ffffffffffffffff60843581811161044b5761020290369086016107e0565b85885260026020908152848920549092906001600160a01b031661043b57878952600383528489205461042b5786895260028352848920336bffffffffffffffffffffffff60a01b8254161790558789526003835286858a205586895285835284892060ff1981541660ff861617905560058352606435858a205560068352848920958251918211610418575090869161029c8754610868565b601f81116103c8575b5083601f82116001146103405796818593927fe767c37e81a9e285dc0df55b2adf7615167e4ffc2db91f3577a4c88148e19f8c998d91610335575b508160011b916000199060031b1c19161790555b8051908161030f575b5050505082519586528501523393a380f35b81610321849389518096819501610785565b8101600781520301902055848138806102fd565b9050830151386102e0565b9690601f198116828c52858c20908c5b8181106103ae5750916001917fe767c37e81a9e285dc0df55b2adf7615167e4ffc2db91f3577a4c88148e19f8c9a828997969510610395575b5050811b0190556102f4565b85015160001960f88460031b161c191690553880610389565b858b01518355998701998b96506001909201918701610350565b90919250868a52838a20601f830160051c81019185841061040e575b90601f8a959493920160051c01905b81811061040057506102a5565b8b81558994506001016103f3565b90915081906103e4565b634e487b7160e01b8a5260419052602489fd5b845163143f0fc760e11b81528690fd5b845163097e743960e31b81528690fd5b8780fd5b8580fd5b8382346101b757816003193601126101b75760015490516001600160a01b039091168152602090f35b5090346101485760203660031901126101485760209282913581526003845220549051908152f35b5082346105015760203660031901126105015782359067ffffffffffffffff8211610501575060206104dd81946104ef933691016107e0565b81845193828580945193849201610785565b81016007815203019020549051908152f35b80fd5b5090346101485760203660031901126101485760209282913581526005845220549051908152f35b8382346101b757816003193601126101b757905490516001600160a01b039091168152602090f35b5090346101485760203660031901126101485735825260026020908152918190205490516001600160a01b039091168152f35b5034610148578260031936011261014857600154916001600160a01b039133838516036105f15750506001600160a01b031991821660015582543392811683178455167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08380a380f35b60249250519063118cdaa760e01b82523390820152fd5b833461050157806003193601126105015761062161083c565b600180546001600160a01b03199081169091558154908116825581906001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08280a380f35b50823461050157602092836003193601126101b7573581526006835281812083835183819490845461069e81610868565b9182855285850196600192838116908160001461073557506001146106f8575b505050506106ce925003836107a8565b6106ea8351948593818552519283809286015285850190610785565b601f01601f19168101030190f35b815285812095935091905b81831061071d5750889450508201016106ce8880806106be565b85548884018501529485019487945091830191610703565b93505050506106ce94925060ff19168552151560051b82010186928880806106be565b929050346107815760203660031901126107815780358452602090815292205460ff1615158152f35b8380fd5b60005b8381106107985750506000910152565b8181015183820152602001610788565b90601f8019910116810190811067ffffffffffffffff8211176107ca57604052565b634e487b7160e01b600052604160045260246000fd5b81601f820112156108375780359067ffffffffffffffff82116107ca5760405192610815601f8401601f1916602001856107a8565b8284526020838301011161083757816000926020809301838601378301015290565b600080fd5b6000546001600160a01b0316330361085057565b60405163118cdaa760e01b8152336004820152602490fd5b90600182811c92168015610898575b602083101461088257565b634e487b7160e01b600052602260045260246000fd5b91607f169161087756fea2646970667358221220b09d8da291a27780a826c39c77617d0ec120a2a18834099e4e5aeee8f29ab8ad64736f6c63430008140033",
+  "deployedBytecode": "0x608060408181526004908136101561001657600080fd5b600092833560e01c9081633e9afaae1461075857508063708d39961461066d578063715018a61461060857806379ba5097146105875780638ac9727b146105545780638da5cb5b1461052c578063b1c551ca14610504578063bc63af1a146104a4578063be6adde21461047c578063e30c397814610453578063e5f99204146101bb578063f2fde38b1461014c5763f8523351146100b357600080fd5b346101485760203660031901126101485781358084526002602052818420546001600160a01b031692909190831561013a5733840361012c57508184526002602052832080546001600160a01b03191690557fe9b4dd735ff047d802eda986a0e7c33018cf3c0a5949000dcbcb0e662d6faf8c8380a380f35b905163047c15ff60e21b8152fd5b905163b93191b360e01b8152fd5b8280fd5b5050346101b75760203660031901126101b757356001600160a01b03818116918290036101485761017b61083c565b600180546001600160a01b031916831790558254167f38d16b8cac22d99fc7c124b9cd0de2d3fa1faef420bfe791d8c362d765e227008380a380f35b5080fd5b5090346101485760a0366003190112610148578035906024359260443580151580910361044f5767ffffffffffffffff60843581811161044b5761020290369086016107e0565b85885260026020908152848920549092906001600160a01b031661043b57878952600383528489205461042b5786895260028352848920336bffffffffffffffffffffffff60a01b8254161790558789526003835286858a205586895285835284892060ff1981541660ff861617905560058352606435858a205560068352848920958251918211610418575090869161029c8754610868565b601f81116103c8575b5083601f82116001146103405796818593927fe767c37e81a9e285dc0df55b2adf7615167e4ffc2db91f3577a4c88148e19f8c998d91610335575b508160011b916000199060031b1c19161790555b8051908161030f575b5050505082519586528501523393a380f35b81610321849389518096819501610785565b8101600781520301902055848138806102fd565b9050830151386102e0565b9690601f198116828c52858c20908c5b8181106103ae5750916001917fe767c37e81a9e285dc0df55b2adf7615167e4ffc2db91f3577a4c88148e19f8c9a828997969510610395575b5050811b0190556102f4565b85015160001960f88460031b161c191690553880610389565b858b01518355998701998b96506001909201918701610350565b90919250868a52838a20601f830160051c81019185841061040e575b90601f8a959493920160051c01905b81811061040057506102a5565b8b81558994506001016103f3565b90915081906103e4565b634e487b7160e01b8a5260419052602489fd5b845163143f0fc760e11b81528690fd5b845163097e743960e31b81528690fd5b8780fd5b8580fd5b8382346101b757816003193601126101b75760015490516001600160a01b039091168152602090f35b5090346101485760203660031901126101485760209282913581526003845220549051908152f35b5082346105015760203660031901126105015782359067ffffffffffffffff8211610501575060206104dd81946104ef933691016107e0565b81845193828580945193849201610785565b81016007815203019020549051908152f35b80fd5b5090346101485760203660031901126101485760209282913581526005845220549051908152f35b8382346101b757816003193601126101b757905490516001600160a01b039091168152602090f35b5090346101485760203660031901126101485735825260026020908152918190205490516001600160a01b039091168152f35b5034610148578260031936011261014857600154916001600160a01b039133838516036105f15750506001600160a01b031991821660015582543392811683178455167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08380a380f35b60249250519063118cdaa760e01b82523390820152fd5b833461050157806003193601126105015761062161083c565b600180546001600160a01b03199081169091558154908116825581906001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08280a380f35b50823461050157602092836003193601126101b7573581526006835281812083835183819490845461069e81610868565b9182855285850196600192838116908160001461073557506001146106f8575b505050506106ce925003836107a8565b6106ea8351948593818552519283809286015285850190610785565b601f01601f19168101030190f35b815285812095935091905b81831061071d5750889450508201016106ce8880806106be565b85548884018501529485019487945091830191610703565b93505050506106ce94925060ff19168552151560051b82010186928880806106be565b929050346107815760203660031901126107815780358452602090815292205460ff1615158152f35b8380fd5b60005b8381106107985750506000910152565b8181015183820152602001610788565b90601f8019910116810190811067ffffffffffffffff8211176107ca57604052565b634e487b7160e01b600052604160045260246000fd5b81601f820112156108375780359067ffffffffffffffff82116107ca5760405192610815601f8401601f1916602001856107a8565b8284526020838301011161083757816000926020809301838601378301015290565b600080fd5b6000546001600160a01b0316330361085057565b60405163118cdaa760e01b8152336004820152602490fd5b90600182811c92168015610898575b602083101461088257565b634e487b7160e01b600052602260045260246000fd5b91607f169161087756fea2646970667358221220b09d8da291a27780a826c39c77617d0ec120a2a18834099e4e5aeee8f29ab8ad64736f6c63430008140033",
+  "devdoc": {
+    "errors": {
+      "OwnableInvalidOwner(address)": [
+        {
+          "details": "The owner is not a valid owner account. (eg. `address(0)`)"
+        }
+      ],
+      "OwnableUnauthorizedAccount(address)": [
+        {
+          "details": "The caller account is not authorized to perform an operation."
+        }
+      ]
+    },
+    "kind": "dev",
+    "methods": {
+      "acceptOwnership()": {
+        "details": "The new owner accepts the ownership transfer."
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "pendingOwner()": {
+        "details": "Returns the address of the pending owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner."
+      },
+      "transferOwnership(address)": {
+        "details": "Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one. Can only be called by the current owner."
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "getIso15118Identifier(bytes32)": {
+        "notice": "Returns ISO 15118 identifier for a vehicle"
+      },
+      "getPublicKey(bytes32)": {
+        "notice": "Returns public key hash for a vehicle"
+      },
+      "getVehicleByChip(bytes32)": {
+        "notice": "Returns vehicle hash by chip ID"
+      },
+      "getVehicleByIso15118Identifier(string)": {
+        "notice": "Returns vehicle hash for a given ISO 15118 identifier"
+      },
+      "isIso15118Enabled(bytes32)": {
+        "notice": "Returns if ISO 15118 is enabled for a vehicle"
+      },
+      "ownerOfVehicle(bytes32)": {
+        "notice": "Returns the owner (driver) of a vehicle, or address(0) if not registered"
+      },
+      "registerVehicle(bytes32,bytes32,bool,bytes32,string)": {
+        "notice": "Registers a vehicle with chip and ISO 15118 support"
+      },
+      "unregisterVehicle(bytes32)": {
+        "notice": "Unregisters a vehicle, only current driver"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 8,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 156,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_pendingOwner",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 6357,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_vehicleOwners",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_bytes32,t_address)"
+      },
+      {
+        "astId": 6361,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_chipToVehicle",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_mapping(t_bytes32,t_bytes32)"
+      },
+      {
+        "astId": 6365,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_iso15118Enabled",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_mapping(t_bytes32,t_bool)"
+      },
+      {
+        "astId": 6369,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_publicKeys",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_mapping(t_bytes32,t_bytes32)"
+      },
+      {
+        "astId": 6373,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_iso15118Identifiers",
+        "offset": 0,
+        "slot": "6",
+        "type": "t_mapping(t_bytes32,t_string_storage)"
+      },
+      {
+        "astId": 6377,
+        "contract": "contracts/VehicleRegistry.sol:VehicleRegistry",
+        "label": "_iso15118ToVehicle",
+        "offset": 0,
+        "slot": "7",
+        "type": "t_mapping(t_string_memory_ptr,t_bytes32)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_bytes32,t_address)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      },
+      "t_mapping(t_bytes32,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_bytes32,t_bytes32)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => bytes32)",
+        "numberOfBytes": "32",
+        "value": "t_bytes32"
+      },
+      "t_mapping(t_bytes32,t_string_storage)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => string)",
+        "numberOfBytes": "32",
+        "value": "t_string_storage"
+      },
+      "t_mapping(t_string_memory_ptr,t_bytes32)": {
+        "encoding": "mapping",
+        "key": "t_string_memory_ptr",
+        "label": "mapping(string => bytes32)",
+        "numberOfBytes": "32",
+        "value": "t_bytes32"
+      },
+      "t_string_memory_ptr": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_string_storage": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

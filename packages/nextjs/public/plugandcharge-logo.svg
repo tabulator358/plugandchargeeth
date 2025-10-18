@@ -1,0 +1,35 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="plugGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="ethGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Plug body (main rectangle) -->
+  <rect x="8" y="12" width="12" height="16" rx="2" fill="url(#plugGradient)" stroke="#065f46" stroke-width="0.5"/>
+  
+  <!-- Plug pins (2 vertical pins) -->
+  <rect x="10" y="6" width="2" height="8" rx="1" fill="url(#plugGradient)" stroke="#065f46" stroke-width="0.5"/>
+  <rect x="16" y="6" width="2" height="8" rx="1" fill="url(#plugGradient)" stroke="#065f46" stroke-width="0.5"/>
+  
+  <!-- Ground pin (horizontal) -->
+  <rect x="13" y="4" width="2" height="2" rx="1" fill="url(#plugGradient)" stroke="#065f46" stroke-width="0.5"/>
+  
+  <!-- ETH Diamond -->
+  <g transform="translate(22, 8)">
+    <!-- Diamond shape -->
+    <path d="M8 2 L14 8 L8 14 L2 8 Z" fill="url(#ethGradient)" stroke="#5b21b6" stroke-width="0.5"/>
+    <!-- Inner diamond highlight -->
+    <path d="M6 4 L10 8 L6 12 L2 8 Z" fill="#a78bfa" fill-opacity="0.3"/>
+    <!-- ETH symbol lines -->
+    <path d="M5 6 L11 6 M5 10 L11 10" stroke="#ffffff" stroke-width="1" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Connection line between plug and ETH -->
+  <path d="M20 20 Q24 20 24 16" stroke="#6b7280" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+</svg>

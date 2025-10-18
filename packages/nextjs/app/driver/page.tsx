@@ -156,8 +156,8 @@ const DriverPage = () => {
     }
   }, [operatorChargersData]);
 
-  // Memoize processed vehicles to prevent infinite loops
-  const processedVehicles = useMemo(() => {
+  // First, get basic vehicle data from events
+  const basicVehicles = useMemo(() => {
     if (!vehicleEvents || !stableAddress) return [];
     
     return vehicleEvents
@@ -166,9 +166,67 @@ const DriverPage = () => {
         vehicleHash: event.args.vehicleHash || "",
         chipId: event.args.chipId || "",
         iso15118Enabled: event.args.iso15118Enabled || false,
-        publicKeyHash: "", // We'll fetch this separately for each vehicle
       }));
   }, [vehicleEvents, stableAddress]);
+
+  // Get vehicle hashes for contract reads
+  const vehicleHashes = basicVehicles.map(v => v.vehicleHash);
+
+  // Contract reads for public key hashes
+  const { data: publicKeyHash1 } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "getPublicKey",
+    args: vehicleHashes[0] ? [vehicleHashes[0] as `0x${string}`] : undefined,
+  } as any);
+
+  const { data: publicKeyHash2 } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "getPublicKey",
+    args: vehicleHashes[1] ? [vehicleHashes[1] as `0x${string}`] : undefined,
+  } as any);
+
+  const { data: publicKeyHash3 } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "getPublicKey",
+    args: vehicleHashes[2] ? [vehicleHashes[2] as `0x${string}`] : undefined,
+  } as any);
+
+  const { data: publicKeyHash4 } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "getPublicKey",
+    args: vehicleHashes[3] ? [vehicleHashes[3] as `0x${string}`] : undefined,
+  } as any);
+
+  const { data: publicKeyHash5 } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "getPublicKey",
+    args: vehicleHashes[4] ? [vehicleHashes[4] as `0x${string}`] : undefined,
+  } as any);
+
+  // Debug logging for public key hashes
+  console.log('publicKeyHash1:', publicKeyHash1);
+  console.log('publicKeyHash2:', publicKeyHash2);
+  console.log('publicKeyHash3:', publicKeyHash3);
+  console.log('publicKeyHash4:', publicKeyHash4);
+  console.log('publicKeyHash5:', publicKeyHash5);
+
+  // Now combine basic vehicle data with public key hashes
+  const processedVehicles = useMemo(() => {
+    return basicVehicles.map((vehicle, index) => {
+      // Get the corresponding public key hash based on index
+      let publicKeyHash = "";
+      if (index === 0) publicKeyHash = (publicKeyHash1 as unknown as string) || "";
+      else if (index === 1) publicKeyHash = (publicKeyHash2 as unknown as string) || "";
+      else if (index === 2) publicKeyHash = (publicKeyHash3 as unknown as string) || "";
+      else if (index === 3) publicKeyHash = (publicKeyHash4 as unknown as string) || "";
+      else if (index === 4) publicKeyHash = (publicKeyHash5 as unknown as string) || "";
+      
+      return {
+        ...vehicle,
+        publicKeyHash: publicKeyHash,
+      };
+    });
+  }, [basicVehicles, publicKeyHash1, publicKeyHash2, publicKeyHash3, publicKeyHash4, publicKeyHash5]);
 
   // Load vehicles for connected address
   useEffect(() => {
@@ -324,6 +382,9 @@ const DriverPage = () => {
                     ? vehicleIso15118Identifier
                     : "Not set"
                   }
+                </p>
+                <p className="text-xs text-gray-500 font-mono break-all">
+                  Raw: {(vehicle.publicKeyHash as unknown as string) || "undefined"}
                 </p>
               </div>
             ) : (
