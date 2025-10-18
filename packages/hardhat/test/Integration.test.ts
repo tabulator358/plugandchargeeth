@@ -78,7 +78,7 @@ describe("Integration Tests", function () {
       const proposedCharge = ethers.parseUnits("30", 6);
 
       // Step 1: Driver registers vehicle
-      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash);
+      await vehicleRegistry.connect(driver1).registerVehicle(vehicleHash, chipHash, true, publicKeyHash, "");
       expect(await vehicleRegistry.ownerOfVehicle(vehicleHash)).to.equal(driver1.address);
 
       // Step 2: Driver gets USDC (already done in fixture)

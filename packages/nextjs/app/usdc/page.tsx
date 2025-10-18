@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { Address } from "~~/components/scaffold-eth/Address/Address";
+import { formatUSDC } from "~~/utils/formatting";
 
 const USDCPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -113,10 +114,10 @@ const USDCPage = () => {
             <h2 className="text-2xl font-bold text-green-400">Your USDC Balance</h2>
           </div>
           <div className="text-4xl font-bold text-white mb-2">
-            {usdcBalance ? (Number(usdcBalance) / 1e6).toFixed(2) : "0.00"} USDC
+            {usdcBalance ? formatUSDC(usdcBalance) : "0 USDC"}
           </div>
           <p className="text-gray-400">
-            Faucet used: {faucetUsed ? (Number(faucetUsed) / 1e6).toFixed(2) : "0.00"} USDC
+            Faucet used: {faucetUsed ? formatUSDC(faucetUsed) : "0 USDC"}
           </p>
         </div>
 

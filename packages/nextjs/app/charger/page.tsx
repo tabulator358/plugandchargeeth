@@ -11,10 +11,12 @@ import {
   CurrencyDollarIcon,
   MapPinIcon,
   ClockIcon,
-  UserIcon
+  UserIcon,
+  CheckCircleIcon
 } from "@heroicons/react/24/outline";
 import { useScaffoldReadContract, useScaffoldWriteContract, useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
 import { Address } from "~~/components/scaffold-eth/Address/Address";
+import { formatUSDC } from "~~/utils/formatting";
 
 interface Charger {
   chargerId: string;
@@ -45,7 +47,6 @@ const ChargerPage = () => {
   
   // State management
   const [chargers, setChargers] = useState<Charger[]>([]);
-  const [activeSessions, setActiveSessions] = useState<Session[]>([]);
   
   // Form states for register charger
   const [showRegisterCharger, setShowRegisterCharger] = useState(false);
@@ -69,6 +70,10 @@ const ChargerPage = () => {
   const [sessionSalt, setSessionSalt] = useState("");
   const [sessionPayer, setSessionPayer] = useState("");
   const [sessionDeposit, setSessionDeposit] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [sessionChipId, setSessionChipId] = useState("");
+  const [sessionIso15118Id, setSessionIso15118Id] = useState("");
   
   // Form states for session actions
   const [proposingSessionId, setProposingSessionId] = useState<string | null>(null);
@@ -89,6 +94,64 @@ const ChargerPage = () => {
   const { writeContractAsync: writePlugAndChargeAsync } = useScaffoldWriteContract({
     contractName: "PlugAndChargeCore",
   });
+
+  // Vehicle lookup by hash
+  const { data: vehicleOwner } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "ownerOfVehicle",
+    args: sessionVehicleHash ? [sessionVehicleHash as `0x${string}`] : undefined,
+  } as any);
+
+  // Vehicle lookup by chip ID
+  const { data: vehicleHashByChip } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "getVehicleByChip",
+    args: sessionChipId ? [`0x${Buffer.from(sessionChipId).toString('hex').padStart(64, '0')}` as `0x${string}`] : undefined,
+  } as any);
+
+  // Vehicle lookup by ISO-15118 identifier using new contract function
+  const { data: vehicleHashByIso15118 } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "getVehicleByIso15118Identifier",
+    args: sessionIso15118Id && sessionIso15118Id.trim().length > 0 ? [sessionIso15118Id.trim()] : undefined,
+  } as any);
+
+  // Debug logging for ISO-15118 lookup
+  useEffect(() => {
+    if (sessionIso15118Id) {
+      console.log("🔍 ISO-15118 lookup - Input:", sessionIso15118Id);
+      console.log("🔍 ISO-15118 lookup - Vehicle Hash:", vehicleHashByIso15118);
+    }
+  }, [sessionIso15118Id, vehicleHashByIso15118]);
+
+  // Get the actual vehicle hash (not the driver address)
+  const actualVehicleHash = sessionVehicleHash || vehicleHashByChip || vehicleHashByIso15118;
+
+  // Get driver address from the vehicle hash
+  const { data: driverAddressFromHash } = useScaffoldReadContract({
+    contractName: "VehicleRegistry",
+    functionName: "ownerOfVehicle",
+    args: actualVehicleHash ? [actualVehicleHash as `0x${string}`] : undefined,
+  } as any);
+
+  const driverAddress = driverAddressFromHash;
+
+  // Debug logging for all lookup methods
+  useEffect(() => {
+    console.log("🔍 All lookup methods:");
+    console.log("  - sessionVehicleHash:", sessionVehicleHash);
+    console.log("  - vehicleHashByChip:", vehicleHashByChip);
+    console.log("  - vehicleHashByIso15118:", vehicleHashByIso15118);
+    console.log("  - actualVehicleHash:", actualVehicleHash);
+    console.log("  - driverAddress:", driverAddress);
+  }, [sessionVehicleHash, vehicleHashByChip, vehicleHashByIso15118, actualVehicleHash, driverAddress]);
+
+  // Verify trusted relationship
+  const { data: isTrusted } = useScaffoldReadContract({
+    contractName: "PlugAndChargeCore",
+    functionName: "trustedChargers",
+    args: driverAddress && sessionChargerId ? [driverAddress as `0x${string}`, BigInt(sessionChargerId)] : undefined,
+  } as any);
 
   // Event history for chargers
   const { data: chargerEvents } = useScaffoldEventHistory({
@@ -115,6 +178,34 @@ const ChargerPage = () => {
   const { data: sessionEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "SessionCreated",
+    watch: true,
+  });
+
+  // Event history for charge proposals
+  const { data: chargeProposedEvents } = useScaffoldEventHistory({
+    contractName: "PlugAndChargeCore",
+    eventName: "ChargeProposed",
+    watch: true,
+  });
+
+  // Event history for session disputes
+  const { data: sessionDisputedEvents } = useScaffoldEventHistory({
+    contractName: "PlugAndChargeCore",
+    eventName: "Disputed",
+    watch: true,
+  });
+
+  // Event history for session settlement
+  const { data: sessionSettledEvents } = useScaffoldEventHistory({
+    contractName: "PlugAndChargeCore",
+    eventName: "Settled",
+    watch: true,
+  });
+
+  // Event history for refund claims
+  const { data: refundClaimedEvents } = useScaffoldEventHistory({
+    contractName: "PlugAndChargeCore",
+    eventName: "Refunded",
     watch: true,
   });
 
@@ -184,8 +275,8 @@ const ChargerPage = () => {
     }
   }, [processedChargers]);
 
-  // Memoize processed active sessions to prevent infinite loops
-  const processedActiveSessions = useMemo(() => {
+  // Get all session IDs for owned chargers
+  const sessionIds = useMemo(() => {
     if (!sessionEvents || !stableAddress || chargers.length === 0) return [];
     
     const ownedChargerIds = chargers
@@ -194,34 +285,90 @@ const ChargerPage = () => {
     
     return sessionEvents
       .filter(event => ownedChargerIds.includes(event.args.chargerId?.toString() || ""))
-      .map(event => ({
-        sessionId: event.args.sessionId?.toString() || "",
+      .map(event => event.args.sessionId?.toString() || "")
+      .filter(id => id !== "");
+  }, [sessionEvents, stableAddress, chargers]);
+
+  // Process complete session data from events with state tracking
+  const processedSessions = useMemo(() => {
+    if (!sessionEvents || !stableAddress || chargers.length === 0) return [];
+    
+    const ownedChargerIds = chargers
+      .filter(c => c.owner.toLowerCase() === stableAddress)
+      .map(c => c.chargerId);
+    
+    return sessionEvents
+      .filter(event => ownedChargerIds.includes(event.args.chargerId?.toString() || ""))
+      .map(event => {
+        const sessionId = event.args.sessionId?.toString() || "";
+        
+        // Determine session state from events
+        let state = 1; // Default to active
+        let proposed = "0";
+        let proposeTs = 0;
+        
+        // Check if charge was proposed
+        const chargeProposed = chargeProposedEvents?.find(e => e.args.sessionId?.toString() === sessionId);
+        if (chargeProposed) {
+          state = 2; // Proposed
+          proposed = chargeProposed.args.amount?.toString() || "0";
+          proposeTs = Number(chargeProposed.blockNumber) || 0;
+        }
+        
+        // Note: We don't have a separate "ProposalAccepted" event, 
+        // the proposal stays in state 2 until settled or disputed
+        
+        // Check if session was disputed
+        const sessionDisputed = sessionDisputedEvents?.find(e => e.args.sessionId?.toString() === sessionId);
+        if (sessionDisputed) {
+          state = 3; // Disputed
+        }
+        
+        // Check if session was settled
+        const sessionSettled = sessionSettledEvents?.find(e => e.args.sessionId?.toString() === sessionId);
+        if (sessionSettled) {
+          state = 4; // Settled
+        }
+        
+        // Check if refund was claimed
+        const refundClaimed = refundClaimedEvents?.find(e => e.args.sessionId?.toString() === sessionId);
+        if (refundClaimed) {
+          state = 5; // Refunded
+        }
+        
+        return {
+          sessionId,
         driver: event.args.driver || "",
         sponsor: event.args.sponsor || "",
         vehicleHash: event.args.vehicleHash || "",
         chargerId: event.args.chargerId?.toString() || "",
-        state: 1, // Active state
+          state,
         reserved: event.args.initialDeposit?.toString() || "0",
-        proposed: "0",
-        startTs: 0,
+          proposed,
+          startTs: Number(event.blockNumber) || 0,
         endTs: 0,
-        proposeTs: 0,
-      }));
-  }, [sessionEvents, stableAddress, chargers]);
+          proposeTs,
+        };
+      });
+  }, [sessionEvents, stableAddress, chargers, chargeProposedEvents, sessionDisputedEvents, sessionSettledEvents, refundClaimedEvents]);
 
-  // Load active sessions for owned chargers
+  // Split sessions by state
+  const activeSessions = processedSessions.filter(s => s.state === 1);
+  const proposedSessions = processedSessions.filter(s => s.state === 2);
+  const completedSessions = processedSessions.filter(s => s.state === 4);
+
+  // Update sessions when data changes
   useEffect(() => {
     if (processingRef.current) return;
     
     // Only update if data has actually changed
-    const sessionsChanged = JSON.stringify(processedActiveSessions) !== JSON.stringify(lastProcessedEvents.current.sessions);
+    const sessionsChanged = JSON.stringify(processedSessions) !== JSON.stringify(lastProcessedEvents.current.sessions);
     if (sessionsChanged) {
       processingRef.current = true;
-      setActiveSessions(processedActiveSessions);
-      lastProcessedEvents.current.sessions = processedActiveSessions;
+      lastProcessedEvents.current.sessions = processedSessions;
       processingRef.current = false;
     }
-  }, [processedActiveSessions]);
+  }, [processedSessions]);
 
   // Set default values when connected
   useEffect(() => {
@@ -241,6 +388,9 @@ const ChargerPage = () => {
   // Register new charger
   const handleRegisterCharger = async () => {
     if (!newChargerId || !newChargerOwner || !newChargerLat || !newChargerLng || !newChargerPrice || !newChargerPower) return;
+    
+    setErrorMessage("");
+    setSuccessMessage("");
     
     try {
       const latE7 = Math.round(parseFloat(newChargerLat) * 1e7);
@@ -267,8 +417,19 @@ const ChargerPage = () => {
       setNewChargerPrice("");
       setNewChargerPower("");
       setShowRegisterCharger(false);
-    } catch (error) {
+      setSuccessMessage("Charger registered successfully!");
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (error: any) {
       console.error("Error registering charger:", error);
+      
+      // Parse error message for user-friendly display
+      if (error?.message?.includes("ErrAlreadyRegistered")) {
+        setErrorMessage("This charger ID is already registered. Please choose a different ID.");
+      } else if (error?.message?.includes("ErrNotChargerOwner")) {
+        setErrorMessage("You are not authorized to register this charger.");
+      } else {
+        setErrorMessage("Failed to register charger. Please check your inputs and try again.");
+      }
     }
   };
 
@@ -314,21 +475,39 @@ const ChargerPage = () => {
 
   // Start charging session
   const handleStartSession = async () => {
-    if (!sessionVehicleHash || !sessionChargerId || !sessionSalt || !sessionPayer || !sessionDeposit) return;
+    if (!sessionChargerId || !sessionDeposit || !driverAddress) return;
+    
+    setErrorMessage("");
+    setSuccessMessage("");
     
     try {
-      const vehicleHash = `0x${Buffer.from(sessionVehicleHash).toString('hex').padStart(64, '0')}` as `0x${string}`;
-      const sessionSaltBytes = sessionSalt as `0x${string}`;
+      // Verify trusted relationship
+      if (!isTrusted) {
+        setErrorMessage("This charger is not trusted by the driver!");
+        return;
+      }
+      
+      // Use the actual vehicle hash we found
+      if (!actualVehicleHash) {
+        setErrorMessage("Please provide vehicle hash, chip ID, or ISO-15118 identifier!");
+        return;
+      }
+      
+      const vehicleHash = actualVehicleHash;
+      
+      // Auto-generate session salt
+      const randomBytes = Array.from({ length: 32 }, () => Math.floor(Math.random() * 256));
+      const autoSessionSalt = `0x${randomBytes.map(b => b.toString(16).padStart(2, '0')).join('')}`;
+      
       const initialDeposit = BigInt(Math.round(parseFloat(sessionDeposit) * 1e6)); // USDC has 6 decimals
       
-      if (sessionMode === "trusted") {
         await writePlugAndChargeAsync({
           functionName: "createSessionByCharger",
           args: [
-            vehicleHash,
+          vehicleHash as `0x${string}`,
             BigInt(sessionChargerId),
-            sessionSaltBytes,
-            sessionPayer as `0x${string}`,
+          autoSessionSalt as `0x${string}`,
+          driverAddress as `0x${string}`, // DRIVER as payer!
             initialDeposit,
             false,
             {
@@ -340,35 +519,60 @@ const ChargerPage = () => {
             }
           ],
         });
-      } else {
-        await writePlugAndChargeAsync({
-          functionName: "createSessionGuestByCharger",
-          args: [
-            vehicleHash,
-            BigInt(sessionChargerId),
-            sessionSaltBytes,
-            sessionPayer as `0x${string}`,
-            initialDeposit,
-            false,
-            {
-              value: 0n,
-              deadline: 0n,
-              v: 0,
-              r: "0x0000000000000000000000000000000000000000000000000000000000000000",
-              s: "0x0000000000000000000000000000000000000000000000000000000000000000"
-            }
-          ],
-        });
-      }
       
       // Reset form
-      setSessionVehicleHash("");
       setSessionChargerId("");
-      setSessionSalt("");
       setSessionDeposit("");
+      setSessionVehicleHash("");
+      setSessionChipId("");
+      setSessionIso15118Id("");
       setShowStartSession(false);
-    } catch (error) {
+      setSuccessMessage("Charging session started successfully!");
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (error: any) {
       console.error("Error starting session:", error);
+      
+      // Parse error message for user-friendly display
+      if (error?.message?.includes("ErrNotTrusted")) {
+        setErrorMessage("This charger is not trusted by the driver!");
+      } else if (error?.message?.includes("ErrNotRegistered")) {
+        setErrorMessage("Vehicle or charger not found!");
+      } else {
+        setErrorMessage("Failed to start charging session. Please check your inputs and try again.");
+      }
+    }
+  };
+
+  // Charger claiming functions
+  const handleProposeCharge = async (sessionId: string, amount: string) => {
+    try {
+      const amountInWei = BigInt(Math.round(parseFloat(amount) * 1e6)); // USDC has 6 decimals
+      
+      await writePlugAndChargeAsync({
+        functionName: "endAndPropose",
+        args: [BigInt(sessionId), amountInWei],
+      });
+      
+      setSuccessMessage("Charge proposed successfully!");
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (error) {
+      console.error("Error proposing charge:", error);
+      setErrorMessage("Failed to propose charge. Please try again.");
+    }
+  };
+
+  const handleSettleSession = async (sessionId: string) => {
+    try {
+      await writePlugAndChargeAsync({
+        functionName: "finalizeIfNoDispute",
+        args: [BigInt(sessionId)],
+      });
+      
+      setSuccessMessage("Session settled successfully!");
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (error) {
+      console.error("Error settling session:", error);
+      setErrorMessage("Failed to settle session. Please try again.");
     }
   };
 
@@ -458,13 +662,21 @@ const ChargerPage = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Owner Address
                   </label>
+                  <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="0x..."
                     value={newChargerOwner}
                     onChange={(e) => setNewChargerOwner(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
-                  />
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                    />
+                    <button
+                      onClick={() => setNewChargerOwner(connectedAddress || "")}
+                      className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white text-sm transition-colors"
+                    >
+                      Use My Address
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -522,6 +734,18 @@ const ChargerPage = () => {
                   />
                 </div>
               </div>
+              {/* Error/Success Messages */}
+              {errorMessage && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+                  <p className="text-red-400 text-sm">{errorMessage}</p>
+                </div>
+              )}
+              {successMessage && (
+                <div className="mb-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
+                  <p className="text-green-400 text-sm">{successMessage}</p>
+                </div>
+              )}
+
               <div className="flex gap-4">
                 <button
                   onClick={handleRegisterCharger}
@@ -530,7 +754,11 @@ const ChargerPage = () => {
                   Register Charger
                 </button>
                 <button
-                  onClick={() => setShowRegisterCharger(false)}
+                  onClick={() => {
+                    setShowRegisterCharger(false);
+                    setErrorMessage("");
+                    setSuccessMessage("");
+                  }}
                   className="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
                 >
                   Cancel
@@ -679,137 +907,226 @@ const ChargerPage = () => {
             <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-600">
               <h3 className="text-lg font-bold text-purple-400 mb-4">Start Charging Session</h3>
               
-              {/* Session Mode Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-3">Session Type</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      value="trusted"
-                      checked={sessionMode === "trusted"}
-                      onChange={(e) => setSessionMode(e.target.value as "trusted" | "guest")}
-                      className="text-purple-600"
-                    />
-                    <span className="text-white">Trusted Driver Session</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      value="guest"
-                      checked={sessionMode === "guest"}
-                      onChange={(e) => setSessionMode(e.target.value as "trusted" | "guest")}
-                      className="text-purple-600"
-                    />
-                    <span className="text-white">Guest Session</span>
-                  </label>
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  {sessionMode === "trusted" 
-                    ? "Driver must have set this charger as trusted" 
-                    : "No trust requirement, any payer can use"
-                  }
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Vehicle Hash
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={sessionMode === "trusted" ? "Registered vehicle hash" : "Guest vehicle label"}
-                    value={sessionVehicleHash}
-                    onChange={(e) => setSessionVehicleHash(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Charger ID
+                    Select Your Charger
                   </label>
                   <select
                     value={sessionChargerId}
                     onChange={(e) => setSessionChargerId(e.target.value)}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
                   >
-                    <option value="">Select a charger...</option>
-                    {chargers.filter(c => c.active).map((charger) => (
+                    <option value="">Choose your charger...</option>
+                    {chargers.filter(c => c.active && c.owner.toLowerCase() === stableAddress).map((charger) => (
                       <option key={charger.chargerId} value={charger.chargerId}>
-                        Charger #{charger.chargerId} - {charger.powerKW}kW
+                        Charger #{charger.chargerId} - {charger.powerKW}kW - ${(charger.pricePerKWhMilliUSD / 1000).toFixed(3)}/kWh
                       </option>
                     ))}
                   </select>
-                </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Session Salt
+                    Driver Identification
                   </label>
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <input
                       type="text"
-                      placeholder="0x..."
-                      value={sessionSalt}
-                      onChange={(e) => setSessionSalt(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                      placeholder="Vehicle Hash (0x...)"
+                      value={sessionVehicleHash}
+                      onChange={(e) => setSessionVehicleHash(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
                     />
-                    <button
-                      onClick={generateSessionSalt}
-                      className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white text-sm transition-colors"
-                    >
-                      Generate
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Payer Address
-                  </label>
+                    <div className="text-center text-gray-400 text-sm">OR</div>
                   <input
                     type="text"
-                    placeholder="0x..."
-                    value={sessionPayer}
-                    onChange={(e) => setSessionPayer(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
-                  />
+                      placeholder="Chip ID (e.g., chip 31848912)"
+                      value={sessionChipId}
+                      onChange={(e) => setSessionChipId(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                    />
+                    <div className="text-center text-gray-400 text-sm">OR</div>
+                    <input
+                      type="text"
+                      placeholder="ISO-15118 Identifier (e.g., ISO15118_ID_123)"
+                      value={sessionIso15118Id}
+                      onChange={(e) => setSessionIso15118Id(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                    />
                 </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    💡 Enter vehicle hash, chip ID, or ISO-15118 identifier to identify the driver
+                  </p>
               </div>
 
-              <div className="mb-6">
+                {/* Driver Preview */}
+                {driverAddress && (
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-400 mb-2">🔍 Driver Found:</h4>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-gray-300">Driver:</span>
+                      <Address address={driverAddress as `0x${string}`} />
+                    </div>
+                    {sessionChargerId && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-300">Trusted Status:</span>
+                        {isTrusted ? (
+                          <div className="flex items-center gap-1 text-green-400">
+                            <span>✅</span>
+                            <span className="text-sm">Trusted</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-red-400">
+                            <span>❌</span>
+                            <span className="text-sm">Not Trusted</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Initial Deposit (USDC)
                 </label>
+                  <div className="flex gap-2 mb-2">
                 <input
                   type="number"
                   step="0.01"
-                  placeholder="e.g., 10.00"
+                      placeholder="e.g., 50.00"
                   value={sessionDeposit}
                   onChange={(e) => setSessionDeposit(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
-                />
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                    />
+                    <button
+                      onClick={() => setSessionDeposit("50")}
+                      className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white text-sm transition-colors"
+                    >
+                      50
+                    </button>
+                    <button
+                      onClick={() => setSessionDeposit("100")}
+                      className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white text-sm transition-colors"
+                    >
+                      100
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    💡 This amount will be reserved for the charging session. You'll only pay for the energy you actually use.
+                  </p>
+                </div>
+
+                {/* Error/Success Messages */}
+                {errorMessage && (
+                  <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+                    <p className="text-red-400 text-sm">{errorMessage}</p>
+                  </div>
+                )}
+                {successMessage && (
+                  <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
+                    <p className="text-green-400 text-sm">{successMessage}</p>
+                  </div>
+                )}
+
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-400 mb-2">ℹ️ How it works:</h4>
+                  <ul className="text-xs text-gray-300 space-y-1">
+                    <li>• Select your charger and identify the driver using any method:</li>
+                    <li>  - Vehicle Hash: Direct vehicle identifier</li>
+                    <li>  - Chip ID: Physical chip identifier (e.g., "chip 31848912")</li>
+                    <li>  - ISO-15118: Standard vehicle-to-grid identifier</li>
+                    <li>• System will verify the driver trusts this charger</li>
+                    <li>• Driver's wallet will be charged for the session</li>
+                    <li>• The session will start immediately after confirmation</li>
+                  </ul>
               </div>
 
               <div className="flex gap-4">
                 <button
                   onClick={handleStartSession}
-                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors"
+                    disabled={!sessionChargerId || !sessionDeposit || !driverAddress || !isTrusted}
+                    className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
                 >
-                  Start Session
+                    🚗 Start Charging Session
                 </button>
                 <button
                   onClick={() => setShowStartSession(false)}
-                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
+                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-medium transition-colors"
                 >
                   Cancel
                 </button>
+                </div>
+                
+                {driverAddress && sessionChargerId && !isTrusted && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                    <p className="text-red-400 text-sm">
+                      ⚠️ This charger is not trusted by the driver. The driver must add this charger to their trusted list first.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
+
+        {/* Proposed Sessions - Pending Driver Approval */}
+        {proposedSessions.length > 0 && (
+          <div className="bg-gradient-to-br from-yellow-900/20 to-orange-900/20 backdrop-blur-sm p-6 rounded-3xl border border-yellow-500/20 mb-6">
+            <h2 className="text-xl font-bold text-yellow-400 flex items-center gap-2 mb-6">
+              <ClockIcon className="w-6 h-6" />
+              Pending Driver Approval ({proposedSessions.length})
+            </h2>
+            <div className="space-y-4">
+              {proposedSessions.map((session) => (
+                <div key={session.sessionId} className="bg-gray-800/50 p-4 rounded-2xl border border-gray-600">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-2">
+                        <h3 className="text-lg font-bold text-white">Session #{session.sessionId}</h3>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">
+                          Proposed
+                        </span>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <UserIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Driver: <Address address={session.driver} />
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <PowerIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Charger #{session.chargerId}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Proposed: {formatUSDC(BigInt(session.proposed))}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Proposed: {new Date(session.proposeTs * 1000).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSettleSession(session.sessionId)}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium transition-colors"
+                      >
+                        💰 Claim Payment
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Active Charging Sessions Section */}
         <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 backdrop-blur-sm p-6 rounded-3xl border border-green-500/20 mb-6">
@@ -905,6 +1222,61 @@ const ChargerPage = () => {
             )}
           </div>
         </div>
+
+        {/* Completed Sessions - History */}
+        {completedSessions.length > 0 && (
+          <div className="bg-gradient-to-br from-green-900/20 to-blue-900/20 backdrop-blur-sm p-6 rounded-3xl border border-green-500/20 mb-6">
+            <h2 className="text-xl font-bold text-green-400 flex items-center gap-2 mb-6">
+              <CheckCircleIcon className="w-6 h-6" />
+              Completed Sessions ({completedSessions.length})
+            </h2>
+            <div className="space-y-4">
+              {completedSessions.map((session) => (
+                <div key={session.sessionId} className="bg-gray-800/50 p-4 rounded-2xl border border-gray-600">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-2">
+                        <h3 className="text-lg font-bold text-white">Session #{session.sessionId}</h3>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                          Settled
+                        </span>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <UserIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Driver: <Address address={session.driver} />
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <PowerIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Charger #{session.chargerId}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
+                            Final: {formatUSDC(BigInt(session.proposed))}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Started: {new Date(session.startTs * 1000).toLocaleString()}
+                        {session.endTs > 0 && (
+                          <span> • Ended: {new Date(session.endTs * 1000).toLocaleString()}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-green-400">
+                      <span className="text-sm">✅ Payment received</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

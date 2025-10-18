@@ -2489,6 +2489,25 @@ const deployedContracts = {
               type: "bytes32",
             },
           ],
+          name: "getIso15118Identifier",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "vehicleHash",
+              type: "bytes32",
+            },
+          ],
           name: "getPublicKey",
           outputs: [
             {
@@ -2509,6 +2528,25 @@ const deployedContracts = {
             },
           ],
           name: "getVehicleByChip",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "iso15118Identifier",
+              type: "string",
+            },
+          ],
+          name: "getVehicleByIso15118Identifier",
           outputs: [
             {
               internalType: "bytes32",
@@ -2604,6 +2642,11 @@ const deployedContracts = {
               internalType: "bytes32",
               name: "publicKeyHash",
               type: "bytes32",
+            },
+            {
+              internalType: "string",
+              name: "iso15118Identifier",
+              type: "string",
             },
           ],
           name: "registerVehicle",

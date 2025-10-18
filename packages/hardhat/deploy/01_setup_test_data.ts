@@ -124,7 +124,8 @@ const setupTestData: DeployFunction = async function (hre: HardhatRuntimeEnviron
         vehicleHash,
         chipId,
         true, // ISO 15118 enabled
-        publicKeyHash
+        publicKeyHash,
+        `ISO-15118-${i + 1}` // ISO 15118 identifier
       );
     
     if ((i + 1) % 10 === 0) {
