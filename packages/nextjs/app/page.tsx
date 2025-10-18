@@ -20,10 +20,12 @@ import {
 const LandingPage = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isClient, setIsClient] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsVisible(true);
+    setIsClient(true);
     
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
@@ -43,7 +45,7 @@ const LandingPage = () => {
 
       {/* Floating Particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(50)].map((_, i) => (
+        {isClient && [...Array(50)].map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-cyan-400/30 rounded-full animate-float"
@@ -87,19 +89,23 @@ const LandingPage = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full text-white font-bold text-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <span className="relative flex items-center gap-2">
-                  <RocketLaunchIcon className="w-6 h-6" />
-                  Join the open charging revolution
-                </span>
-              </button>
-              <button className="group px-8 py-4 border-2 border-cyan-400 rounded-full text-cyan-400 font-bold text-lg transition-all duration-300 hover:bg-cyan-400 hover:text-black hover:scale-105">
-                <span className="flex items-center gap-2">
-                  <PlayIcon className="w-6 h-6" />
-                  Explore how it works
-                </span>
-              </button>
+              <Link href="/driver">
+                <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full text-white font-bold text-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <span className="relative flex items-center gap-2">
+                    <RocketLaunchIcon className="w-6 h-6" />
+                    Start Enjoying PlugAndCharge Experience
+                  </span>
+                </button>
+              </Link>
+              <Link href="/charger">
+                <button className="group px-8 py-4 border-2 border-cyan-400 rounded-full text-cyan-400 font-bold text-lg transition-all duration-300 hover:bg-cyan-400 hover:text-black hover:scale-105">
+                  <span className="flex items-center gap-2">
+                    <PlayIcon className="w-6 h-6" />
+                    Connect Your Charger
+                  </span>
+                </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -290,10 +296,10 @@ const LandingPage = () => {
             <div className="group relative bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm p-8 rounded-3xl border border-teal-500/20 hover:border-teal-500/40 transition-all duration-300 hover:scale-105">
               <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-cyan-500/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative z-10">
-                <div className="text-5xl mb-4 animate-ping">🤝</div>
-                <h3 className="text-xl font-bold mb-4 text-teal-400">Global Environmental Impact</h3>
+                <div className="text-5xl mb-4">🤝</div>
+                <h3 className="text-xl font-bold mb-4 text-teal-400">Help Global Ecology Change</h3>
                 <p className="text-gray-300">
-                  Fund public chargers easily
+                  Contribute to better global ecology through sustainable charging
                 </p>
               </div>
             </div>
@@ -471,11 +477,6 @@ const LandingPage = () => {
                 Connect Your Charger
               </span>
             </button>
-            <button className="group px-8 py-4 border-2 border-purple-400 rounded-full text-purple-400 font-bold text-lg transition-all duration-300 hover:bg-purple-400 hover:text-black hover:scale-105">
-              <span className="flex items-center gap-2">
-                <PlayIcon className="w-6 h-6" />
-              </span>
-            </button>
           </div>
 
           <div className="border-t border-gray-700/50 pt-12">
@@ -486,22 +487,6 @@ const LandingPage = () => {
                 </h3>
                 <p className="text-gray-400">© 2025 PlugAndCharge.ETH. Built with ❤️ on EVM</p>
               </div>
-              <div className="flex space-x-8">
-                <Link href="/plug-and-charge" className="text-cyan-400 hover:text-cyan-300 transition-colors duration-300 font-medium">
-                  Demo
-                </Link>
-                <Link href="/debug" className="text-cyan-400 hover:text-cyan-300 transition-colors duration-300 font-medium">
-                  Debug
-                </Link>
-                <Link href="/blockexplorer" className="text-cyan-400 hover:text-cyan-300 transition-colors duration-300 font-medium">
-                  Explorer
-                </Link>
-              </div>
-            </div>
-            <div className="mt-8 pt-8 border-t border-gray-700/50">
-              <p className="text-gray-500">
-                © 2024 PlugAndCharge.ETH. Built with ❤️ on <span className="text-purple-400">Ethereum</span> & <span className="text-blue-400">Base</span>.
-              </p>
             </div>
           </div>
         </div>

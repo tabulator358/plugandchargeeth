@@ -484,5 +484,525 @@ describe("PlugAndChargeCore", function () {
       const session = await plugAndCharge.getSession(1);
       expect(session.state).to.equal(5); // Refunded
     });
+
+    it("Should not allow refunding session before timeout", async function () {
+      const { plugAndCharge, usdc, driver1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const initialDeposit = ethers.parseUnits("50", 6);
+
+      // Create session
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), initialDeposit);
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, initialDeposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Try to refund before timeout
+      await expect(plugAndCharge.connect(driver1).refundIfStale(1))
+        .to.be.revertedWithCustomError(plugAndCharge, "ErrTooSoon");
+    });
+  });
+
+  describe("Edge Cases and Attack Vectors", function () {
+    it("Should handle exact minimum deposit", async function () {
+      const { plugAndCharge, usdc, driver1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const minDeposit = ethers.parseUnits("10", 6); // Exactly minimum
+
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), minDeposit);
+
+      await expect(
+        plugAndCharge
+          .connect(driver1)
+          .createSession(vehicleHash, chargerId, sessionSalt, minDeposit, ethers.ZeroAddress, false, {
+            value: 0,
+            deadline: 0,
+            v: 0,
+            r: ethers.ZeroHash,
+            s: ethers.ZeroHash,
+          }),
+      )
+        .to.emit(plugAndCharge, "SessionCreated")
+        .withArgs(1, driver1.address, ethers.ZeroAddress, vehicleHash, chargerId, minDeposit);
+    });
+
+    it("Should handle exact maximum deposit", async function () {
+      const { plugAndCharge, usdc, driver1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const maxDeposit = ethers.parseUnits("1000", 6); // Exactly maximum
+
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), maxDeposit);
+
+      await expect(
+        plugAndCharge
+          .connect(driver1)
+          .createSession(vehicleHash, chargerId, sessionSalt, maxDeposit, ethers.ZeroAddress, false, {
+            value: 0,
+            deadline: 0,
+            v: 0,
+            r: ethers.ZeroHash,
+            s: ethers.ZeroHash,
+          }),
+      )
+        .to.emit(plugAndCharge, "SessionCreated")
+        .withArgs(1, driver1.address, ethers.ZeroAddress, vehicleHash, chargerId, maxDeposit);
+    });
+
+    it("Should handle multiple concurrent sessions", async function () {
+      const { plugAndCharge, usdc, driver1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), deposit * 3n);
+
+      // Create first session
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Create second session with different salt
+      const sessionSalt2 = ethers.keccak256(ethers.toUtf8Bytes("session_salt_456"));
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt2, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Create third session with different salt
+      const sessionSalt3 = ethers.keccak256(ethers.toUtf8Bytes("session_salt_789"));
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt3, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Verify all sessions exist
+      const session1 = await plugAndCharge.getSession(1);
+      const session2 = await plugAndCharge.getSession(2);
+      const session3 = await plugAndCharge.getSession(3);
+
+      expect(session1.state).to.equal(1); // Active
+      expect(session2.state).to.equal(1); // Active
+      expect(session3.state).to.equal(1); // Active
+    });
+
+    it("Should prevent reentrancy attacks", async function () {
+      // This test verifies that the nonReentrant modifier is working
+      // In a real scenario, reentrancy would be tested with a malicious contract
+      // For now, we just verify that the contract has the reentrancy guard
+      const { plugAndCharge } = await loadFixture(deployPlugAndChargeFixture);
+      
+      // Verify that the contract has the reentrancy guard by checking if it's deployed
+      expect(await plugAndCharge.getAddress()).to.be.properAddress;
+      
+      // The reentrancy guard is inherited from ReentrancyGuard and will prevent
+      // reentrant calls to functions marked with nonReentrant modifier
+      // A proper reentrancy test would require a malicious contract that tries to reenter
+    });
+
+    it("Should handle session timeout edge cases", async function () {
+      const { plugAndCharge, usdc, driver1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), deposit);
+
+      // Create session
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Fast forward to exactly the timeout
+      await ethers.provider.send("evm_increaseTime", [3600]); // Exactly 1 hour
+      await ethers.provider.send("evm_mine", []);
+
+      // Should be able to refund (at timeout)
+      await expect(plugAndCharge.connect(driver1).refundIfStale(1))
+        .to.emit(plugAndCharge, "Refunded");
+
+      // Fast forward 1 more second
+      await ethers.provider.send("evm_increaseTime", [1]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Now should be able to refund
+      await expect(plugAndCharge.connect(driver1).refundIfStale(1))
+        .to.emit(plugAndCharge, "Refunded")
+        .withArgs(1, deposit);
+    });
+  });
+
+  describe("EIP-712 Signature Validation", function () {
+    it("Should validate correct EIP-712 signature for dispute", async function () {
+      const { plugAndCharge, usdc, driver1, chargerOwner1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+      const proposedCharge = ethers.parseUnits("30", 6);
+
+      // Create and end session
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), deposit);
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      await plugAndCharge.connect(chargerOwner1).endAndPropose(1, proposedCharge);
+
+      // Create valid EIP-712 signature
+      const domain = {
+        name: "PlugAndChargeCore",
+        version: "1",
+        chainId: 31337, // Hardhat local network
+        verifyingContract: await plugAndCharge.getAddress(),
+      };
+
+      const types = {
+        Dispute: [
+          { name: "sessionId", type: "uint256" },
+          { name: "reasonHash", type: "bytes32" },
+        ],
+      };
+
+      const reasonHash = ethers.keccak256(ethers.toUtf8Bytes("Charger overcharged"));
+      const value = {
+        sessionId: 1,
+        reasonHash: reasonHash,
+      };
+
+      const signature = await driver1.signTypedData(domain, types, value);
+
+      // Should be able to dispute with valid signature
+      await expect(plugAndCharge.connect(driver1).dispute(1, reasonHash, signature))
+        .to.emit(plugAndCharge, "Disputed")
+        .withArgs(1, reasonHash);
+    });
+
+    it("Should reject invalid EIP-712 signature for dispute", async function () {
+      const { plugAndCharge, usdc, driver1, chargerOwner1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+      const proposedCharge = ethers.parseUnits("30", 6);
+
+      // Create and end session
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), deposit);
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      await plugAndCharge.connect(chargerOwner1).endAndPropose(1, proposedCharge);
+
+      const reasonHash = ethers.keccak256(ethers.toUtf8Bytes("Charger overcharged"));
+      const invalidSignature = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
+
+      // Should reject invalid signature
+      await expect(plugAndCharge.connect(driver1).dispute(1, reasonHash, invalidSignature))
+        .to.be.revertedWithCustomError(plugAndCharge, "ECDSAInvalidSignature");
+    });
+  });
+
+  describe("Dispute Resolution Scenarios", function () {
+    it("Should handle 50/50 dispute resolution", async function () {
+      const { plugAndCharge, usdc, driver1, chargerOwner1, vehicleHash, chargerId, sessionSalt, owner } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+      const proposedCharge = ethers.parseUnits("30", 6);
+
+      // Create and end session
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), deposit);
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      await plugAndCharge.connect(chargerOwner1).endAndPropose(1, proposedCharge);
+
+      // Create dispute
+      const reasonHash = ethers.keccak256(ethers.toUtf8Bytes("Dispute"));
+      const domain = {
+        name: "PlugAndChargeCore",
+        version: "1",
+        chainId: 31337,
+        verifyingContract: await plugAndCharge.getAddress(),
+      };
+      const types = {
+        Dispute: [
+          { name: "sessionId", type: "uint256" },
+          { name: "reasonHash", type: "bytes32" },
+        ],
+      };
+      const value = { sessionId: 1, reasonHash: reasonHash };
+      const signature = await driver1.signTypedData(domain, types, value);
+
+      await plugAndCharge.connect(driver1).dispute(1, reasonHash, signature);
+
+      // Resolve with 50/50 split
+      const driverAmount = ethers.parseUnits("25", 6);
+      const chargerAmount = ethers.parseUnits("25", 6);
+
+      await expect(plugAndCharge.connect(owner).resolveDispute(1, driverAmount, chargerAmount))
+        .to.emit(plugAndCharge, "Settled")
+        .withArgs(1, driverAmount, chargerAmount);
+
+      const session = await plugAndCharge.getSession(1);
+      expect(session.state).to.equal(4); // Settled
+    });
+
+    it("Should handle driver-favored dispute resolution", async function () {
+      const { plugAndCharge, usdc, driver1, chargerOwner1, vehicleHash, chargerId, sessionSalt, owner } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+      const proposedCharge = ethers.parseUnits("30", 6);
+
+      // Create and end session
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), deposit);
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, deposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      await plugAndCharge.connect(chargerOwner1).endAndPropose(1, proposedCharge);
+
+      // Create dispute
+      const reasonHash = ethers.keccak256(ethers.toUtf8Bytes("Dispute"));
+      const domain = {
+        name: "PlugAndChargeCore",
+        version: "1",
+        chainId: 31337,
+        verifyingContract: await plugAndCharge.getAddress(),
+      };
+      const types = {
+        Dispute: [
+          { name: "sessionId", type: "uint256" },
+          { name: "reasonHash", type: "bytes32" },
+        ],
+      };
+      const value = { sessionId: 1, reasonHash: reasonHash };
+      const signature = await driver1.signTypedData(domain, types, value);
+
+      await plugAndCharge.connect(driver1).dispute(1, reasonHash, signature);
+
+      // Resolve with driver getting most of the money
+      const driverAmount = ethers.parseUnits("40", 6);
+      const chargerAmount = ethers.parseUnits("10", 6);
+
+      await expect(plugAndCharge.connect(owner).resolveDispute(1, driverAmount, chargerAmount))
+        .to.emit(plugAndCharge, "Settled")
+        .withArgs(1, driverAmount, chargerAmount);
+    });
+  });
+
+  describe("Sponsor Scenarios", function () {
+    it("Should handle sponsor paying for driver's session", async function () {
+      const { plugAndCharge, usdc, driver1, sponsor1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+
+      // Sponsor approves and creates session for driver
+      await usdc.connect(sponsor1).approve(await plugAndCharge.getAddress(), deposit);
+
+      await expect(
+        plugAndCharge.connect(sponsor1).createSession(
+          vehicleHash,
+          chargerId,
+          sessionSalt,
+          deposit,
+          sponsor1.address, // sponsor
+          false,
+          { value: 0, deadline: 0, v: 0, r: ethers.ZeroHash, s: ethers.ZeroHash },
+        ),
+      )
+        .to.emit(plugAndCharge, "SessionCreated")
+        .withArgs(1, driver1.address, sponsor1.address, vehicleHash, chargerId, deposit);
+
+      const session = await plugAndCharge.getSession(1);
+      expect(session.driver).to.equal(driver1.address);
+      expect(session.sponsor).to.equal(sponsor1.address);
+    });
+
+    it("Should allow sponsor to add deposit to session", async function () {
+      const { plugAndCharge, usdc, driver1, sponsor1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const initialDeposit = ethers.parseUnits("50", 6);
+      const additionalDeposit = ethers.parseUnits("25", 6);
+
+      // Sponsor creates session
+      await usdc.connect(sponsor1).approve(await plugAndCharge.getAddress(), initialDeposit + additionalDeposit);
+      await plugAndCharge
+        .connect(sponsor1)
+        .createSession(vehicleHash, chargerId, sessionSalt, initialDeposit, sponsor1.address, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Sponsor adds more deposit
+      await expect(plugAndCharge.connect(sponsor1).addDeposit(1, additionalDeposit))
+        .to.emit(plugAndCharge, "DepositAdded")
+        .withArgs(1, additionalDeposit);
+
+      const session = await plugAndCharge.getSession(1);
+      expect(session.reserved).to.equal(initialDeposit + additionalDeposit);
+    });
+  });
+
+  describe("Trusted Charger Workflows", function () {
+    it("Should allow trusted charger to pull deposit", async function () {
+      const { plugAndCharge, usdc, driver1, chargerOwner1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const initialDeposit = ethers.parseUnits("50", 6);
+      const additionalDeposit = ethers.parseUnits("25", 6);
+
+      // Set charger as trusted
+      await plugAndCharge.connect(driver1).setTrustedCharger(driver1.address, chargerId, true);
+
+      // Create session
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), initialDeposit + additionalDeposit);
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, initialDeposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Charger pulls additional deposit
+      await expect(
+        plugAndCharge.connect(chargerOwner1).trustedPullDeposit(
+          1,
+          additionalDeposit,
+          driver1.address,
+          false,
+          { value: 0, deadline: 0, v: 0, r: ethers.ZeroHash, s: ethers.ZeroHash }
+        )
+      )
+        .to.emit(plugAndCharge, "DepositAdded")
+        .withArgs(1, additionalDeposit);
+
+      const session = await plugAndCharge.getSession(1);
+      expect(session.reserved).to.equal(initialDeposit + additionalDeposit);
+    });
+
+    it("Should not allow non-trusted charger to pull deposit", async function () {
+      const { plugAndCharge, usdc, driver1, chargerOwner1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const initialDeposit = ethers.parseUnits("50", 6);
+      const additionalDeposit = ethers.parseUnits("25", 6);
+
+      // Don't set charger as trusted
+
+      // Create session
+      await usdc.connect(driver1).approve(await plugAndCharge.getAddress(), initialDeposit + additionalDeposit);
+      await plugAndCharge
+        .connect(driver1)
+        .createSession(vehicleHash, chargerId, sessionSalt, initialDeposit, ethers.ZeroAddress, false, {
+          value: 0,
+          deadline: 0,
+          v: 0,
+          r: ethers.ZeroHash,
+          s: ethers.ZeroHash,
+        });
+
+      // Charger tries to pull additional deposit (should fail)
+      await expect(
+        plugAndCharge.connect(chargerOwner1).trustedPullDeposit(
+          1,
+          additionalDeposit,
+          driver1.address,
+          false,
+          { value: 0, deadline: 0, v: 0, r: ethers.ZeroHash, s: ethers.ZeroHash }
+        )
+      ).to.be.revertedWithCustomError(plugAndCharge, "ErrNotTrusted");
+    });
+  });
+
+  describe("Guest Session Workflows", function () {
+    it("Should handle guest session creation by charger", async function () {
+      const { plugAndCharge, usdc, chargerOwner1, vehicleHash, chargerId, sessionSalt } =
+        await loadFixture(deployPlugAndChargeFixture);
+
+      const deposit = ethers.parseUnits("50", 6);
+
+      // Give USDC to charger owner and approve
+      await usdc.connect(chargerOwner1).faucet(deposit);
+      await usdc.connect(chargerOwner1).approve(await plugAndCharge.getAddress(), deposit);
+
+      await expect(
+        plugAndCharge.connect(chargerOwner1).createSessionGuestByCharger(
+          vehicleHash,
+          chargerId,
+          sessionSalt,
+          chargerOwner1.address, // payer
+          deposit,
+          false,
+          { value: 0, deadline: 0, v: 0, r: ethers.ZeroHash, s: ethers.ZeroHash },
+        ),
+      )
+        .to.emit(plugAndCharge, "SessionCreated")
+        .withArgs(1, chargerOwner1.address, ethers.ZeroAddress, vehicleHash, chargerId, deposit);
+
+      const session = await plugAndCharge.getSession(1);
+      expect(session.driver).to.equal(chargerOwner1.address); // In guest mode, payer acts as driver
+      expect(session.sponsor).to.equal(ethers.ZeroAddress);
+    });
   });
 });

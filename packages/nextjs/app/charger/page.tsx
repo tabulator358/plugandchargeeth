@@ -138,16 +138,12 @@ const ChargerPage = () => {
     }
   }, [chargerEvents, stableAddress]);
 
-  // Memoize owned charger IDs to prevent circular dependency
-  const ownedChargerIds = useMemo(() => {
-    return chargers.map(c => c.chargerId);
-  }, [chargers]);
-
   // Load active sessions for owned chargers
   useEffect(() => {
     if (processingRef.current) return;
     
-    if (sessionEvents && stableAddress && ownedChargerIds.length > 0) {
+    if (sessionEvents && stableAddress && chargers.length > 0) {
+      const ownedChargerIds = chargers.map(c => c.chargerId);
       const ownedSessions = sessionEvents
         .filter(event => ownedChargerIds.includes(event.args.chargerId?.toString() || ""))
         .map(event => ({
@@ -172,11 +168,11 @@ const ChargerPage = () => {
         lastProcessedEvents.current.sessions = ownedSessions;
         processingRef.current = false;
       }
-    } else if (!stableAddress || ownedChargerIds.length === 0) {
+    } else if (!stableAddress || chargers.length === 0) {
       setActiveSessions([]);
       lastProcessedEvents.current.sessions = [];
     }
-  }, [sessionEvents, stableAddress, ownedChargerIds]);
+  }, [sessionEvents, stableAddress, chargers]);
 
   // Set default values when connected
   useEffect(() => {
