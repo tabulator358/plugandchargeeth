@@ -72,7 +72,7 @@ const getEvents = async (
  * @param config.receiptData - if set to true it will return the receipt data for each event (default: false)
  * @param config.watch - if set to true, the events will be updated every pollingInterval milliseconds set at scaffoldConfig (default: false)
  * @param config.enabled - set this to false to disable the hook from running (default: true)
- * @param config.blocksBatchSize - optional batch size for fetching events. If specified, each batch will contain at most this many blocks (default: 500)
+ * @param config.blocksBatchSize - optional batch size for fetching events. If specified, each batch will contain at most this many blocks (default: 2000)
  */
 export const useScaffoldEventHistory = <
   TContractName extends ContractName,
@@ -92,7 +92,7 @@ export const useScaffoldEventHistory = <
   receiptData,
   watch,
   enabled = true,
-  blocksBatchSize = 500,
+  blocksBatchSize = 2000,
 }: UseScaffoldEventHistoryConfig<TContractName, TEventName, TBlockData, TTransactionData, TReceiptData>) => {
   const selectedNetwork = useSelectedNetwork(chainId);
 

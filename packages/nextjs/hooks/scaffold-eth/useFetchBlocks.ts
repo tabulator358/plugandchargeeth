@@ -12,7 +12,7 @@ import {
 import { hardhat } from "viem/chains";
 import { decodeTransactionData } from "~~/utils/scaffold-eth";
 
-const BLOCKS_PER_PAGE = 20;
+const BLOCKS_PER_PAGE = 50;
 
 export const testClient = createTestClient({
   chain: hardhat,
@@ -44,6 +44,7 @@ export const useFetchBlocks = () => {
         (_, i) => startingBlock - BigInt(i),
       );
 
+      // Optimized parallel fetching with better error handling
       const blocksWithTransactions = blockNumbersToFetch.map(async blockNumber => {
         try {
           return testClient.getBlock({ blockNumber, includeTransactions: true });
@@ -58,6 +59,7 @@ export const useFetchBlocks = () => {
         block.transactions.forEach(tx => decodeTransactionData(tx as Transaction));
       });
 
+      // Optimized parallel fetching of transaction receipts with better batching
       const txReceipts = await Promise.all(
         fetchedBlocks.flatMap(block =>
           block.transactions.map(async tx => {

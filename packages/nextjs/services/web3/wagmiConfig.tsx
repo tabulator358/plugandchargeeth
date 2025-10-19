@@ -24,8 +24,16 @@ export const wagmiConfig = createConfig({
     } else {
       const alchemyHttpUrl = getAlchemyHttpUrl(chain.id);
       if (alchemyHttpUrl) {
-        const isUsingDefaultKey = scaffoldConfig.alchemyApiKey === DEFAULT_ALCHEMY_API_KEY;
-        rpcFallbacks = isUsingDefaultKey ? [http(), http(alchemyHttpUrl)] : [http(alchemyHttpUrl), http()];
+        // Always prioritize Alchemy for faster responses - higher API usage but better performance
+        // Increased timeout and retry for better reliability
+        rpcFallbacks = [
+          http(alchemyHttpUrl, { 
+            timeout: 30000, // 30 second timeout
+            retryCount: 3,
+            retryDelay: 1000
+          }), 
+          http()
+        ];
       }
     }
     return createClient({
