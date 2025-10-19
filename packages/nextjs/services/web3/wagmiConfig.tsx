@@ -24,13 +24,14 @@ export const wagmiConfig = createConfig({
     } else {
       const alchemyHttpUrl = getAlchemyHttpUrl(chain.id);
       if (alchemyHttpUrl) {
-        // Always prioritize Alchemy for faster responses - higher API usage but better performance
-        // Increased timeout and retry for better reliability
+        // Optimized for good performance - reasonable but fast settings
         rpcFallbacks = [
           http(alchemyHttpUrl, { 
             timeout: 30000, // 30 second timeout
-            retryCount: 3,
-            retryDelay: 1000
+            retryCount: 3, // Reasonable retries
+            retryDelay: 1000, // Standard retry delay
+            batch: true, // Enable request batching for efficiency
+            batchSize: 500, // Reasonable batch size
           }), 
           http()
         ];

@@ -72,7 +72,7 @@ const getEvents = async (
  * @param config.receiptData - if set to true it will return the receipt data for each event (default: false)
  * @param config.watch - if set to true, the events will be updated every pollingInterval milliseconds set at scaffoldConfig (default: false)
  * @param config.enabled - set this to false to disable the hook from running (default: true)
- * @param config.blocksBatchSize - optional batch size for fetching events. If specified, each batch will contain at most this many blocks (default: 2000)
+ * @param config.blocksBatchSize - optional batch size for fetching events. If specified, each batch will contain at most this many blocks (default: 3000)
  */
 export const useScaffoldEventHistory = <
   TContractName extends ContractName,
@@ -92,7 +92,7 @@ export const useScaffoldEventHistory = <
   receiptData,
   watch,
   enabled = true,
-  blocksBatchSize = 2000,
+  blocksBatchSize = 3000,
 }: UseScaffoldEventHistoryConfig<TContractName, TEventName, TBlockData, TTransactionData, TReceiptData>) => {
   const selectedNetwork = useSelectedNetwork(chainId);
 
@@ -151,41 +151,42 @@ export const useScaffoldEventHistory = <
     queryFn: async ({ pageParam }) => {
       if (!isContractAddressAndClientReady) return undefined;
 
-      // Calculate the toBlock for this batch
-      let batchToBlock = toBlock;
-      const batchEndBlock = pageParam + BigInt(blocksBatchSize) - 1n;
-      const maxBlock = toBlock || (blockNumber ? BigInt(blockNumber) : undefined);
-      if (maxBlock) {
-        batchToBlock = batchEndBlock < maxBlock ? batchEndBlock : maxBlock;
+      // OPTIMIZED: Fetch from newest to oldest for immediate UX
+      // Calculate the fromBlock for this batch (going backwards)
+      let batchFromBlock = pageParam;
+      const batchStartBlock = pageParam - BigInt(blocksBatchSize) + 1n;
+      const minBlock = fromBlockValue;
+      if (batchStartBlock >= minBlock) {
+        batchFromBlock = batchStartBlock;
+      } else {
+        batchFromBlock = minBlock;
       }
 
       const data = await getEvents(
         {
           address: deployedContractData?.address,
           event,
-          fromBlock: pageParam,
-          toBlock: batchToBlock,
+          fromBlock: batchFromBlock,
+          toBlock: pageParam,
           args: filters,
         },
         publicClient,
         { blockData, transactionData, receiptData },
       );
 
-      setLastFetchedBlock(batchToBlock || blockNumber || 0n);
+      setLastFetchedBlock(batchFromBlock);
 
       return data;
     },
     enabled: enabled && isContractAddressAndClientReady && !isPollingActive, // Disable when polling starts
-    initialPageParam: fromBlockValue,
+    initialPageParam: toBlock || (blockNumber ? BigInt(blockNumber) : fromBlockValue), // Start from newest block
     getNextPageParam: (lastPage, allPages, lastPageParam) => {
       if (!blockNumber || fromBlockValue >= blockNumber) return undefined;
 
-      const nextBlock = lastPageParam + BigInt(blocksBatchSize);
+      const nextBlock = lastPageParam - BigInt(blocksBatchSize); // Go backwards
 
-      // Don't go beyond the specified toBlock or current block
-      const maxBlock = toBlock && toBlock < blockNumber ? toBlock : blockNumber;
-
-      if (nextBlock > maxBlock) return undefined;
+      // Don't go below the specified fromBlock
+      if (nextBlock < fromBlockValue) return undefined;
 
       return nextBlock;
     },
@@ -198,8 +199,9 @@ export const useScaffoldEventHistory = <
         TReceiptData
       >;
 
+      // OPTIMIZED: Events are already in newest-first order, no need to reverse
       return {
-        pages: events?.reverse(),
+        pages: events,
         pageParams: data.pageParams,
       };
     },

@@ -32,6 +32,13 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
+      // Optimized caching for good performance
+      staleTime: 5000, // 5 seconds stale time for reasonable freshness
+      gcTime: 300000, // 5 minutes cache time
+      refetchInterval: 3000, // 3 second refetch interval (matches polling)
+      refetchIntervalInBackground: true, // Continue refetching in background
+      retry: 3,
+      retryDelay: 1000, // Reasonable retry delay
     },
   },
 });

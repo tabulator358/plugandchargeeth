@@ -12,7 +12,7 @@ import {
 import { hardhat } from "viem/chains";
 import { decodeTransactionData } from "~~/utils/scaffold-eth";
 
-const BLOCKS_PER_PAGE = 50;
+const BLOCKS_PER_PAGE = 75;
 
 export const testClient = createTestClient({
   chain: hardhat,
@@ -38,10 +38,11 @@ export const useFetchBlocks = () => {
       const blockNumber = await testClient.getBlockNumber();
       setTotalBlocks(blockNumber);
 
+      // OPTIMIZED: Start from newest blocks for immediate UX
       const startingBlock = blockNumber - BigInt(currentPage * BLOCKS_PER_PAGE);
       const blockNumbersToFetch = Array.from(
         { length: Number(BLOCKS_PER_PAGE < startingBlock + 1n ? BLOCKS_PER_PAGE : startingBlock + 1n) },
-        (_, i) => startingBlock - BigInt(i),
+        (_, i) => startingBlock - BigInt(i), // Already fetching newest first
       );
 
       // Optimized parallel fetching with better error handling
