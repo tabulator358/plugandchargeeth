@@ -1,32 +1,14 @@
-import { useCallback, useEffect } from "react";
-import { useTargetNetwork } from "./useTargetNetwork";
-import { useInterval } from "usehooks-ts";
-import scaffoldConfig from "~~/scaffold.config";
 import { useGlobalState } from "~~/services/store/store";
-import { fetchPriceFromUniswap } from "~~/utils/scaffold-eth";
-
-const enablePolling = false;
 
 /**
- * Get the price of Native Currency based on Native Token/DAI trading pair from Uniswap SDK
+ * Disabled Native Currency Price fetching to avoid RPC issues
+ * ETH price is not needed for Plug and Charge application (uses USDC)
  */
 export const useInitializeNativeCurrencyPrice = () => {
   const setNativeCurrencyPrice = useGlobalState(state => state.setNativeCurrencyPrice);
   const setIsNativeCurrencyFetching = useGlobalState(state => state.setIsNativeCurrencyFetching);
-  const { targetNetwork } = useTargetNetwork();
 
-  const fetchPrice = useCallback(async () => {
-    setIsNativeCurrencyFetching(true);
-    const price = await fetchPriceFromUniswap(targetNetwork);
-    setNativeCurrencyPrice(price);
-    setIsNativeCurrencyFetching(false);
-  }, [setIsNativeCurrencyFetching, setNativeCurrencyPrice, targetNetwork]);
-
-  // Get the price of ETH from Uniswap on mount
-  useEffect(() => {
-    fetchPrice();
-  }, [fetchPrice]);
-
-  // Get the price of ETH from Uniswap at a given interval
-  useInterval(fetchPrice, enablePolling ? scaffoldConfig.pollingInterval : null);
+  // Immediately set price to 0 and stop fetching to avoid RPC errors
+  setNativeCurrencyPrice(0);
+  setIsNativeCurrencyFetching(false);
 };

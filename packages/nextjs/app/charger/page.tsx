@@ -157,21 +157,21 @@ const ChargerPage = () => {
   const { data: chargerEvents } = useScaffoldEventHistory({
     contractName: "ChargerRegistry",
     eventName: "ChargerRegistered",
-    watch: true,
+    // watch: true, // Removed - chargers are registered rarely
   });
 
   // Event history for charger updates
   const { data: chargerUpdateEvents } = useScaffoldEventHistory({
     contractName: "ChargerRegistry",
     eventName: "ChargerUpdated",
-    watch: true,
+    // watch: true, // Removed - updates are rare
   });
 
   // Event history for charger active status changes
   const { data: chargerActiveEvents } = useScaffoldEventHistory({
     contractName: "ChargerRegistry",
     eventName: "ChargerActiveSet",
-    watch: true,
+    // watch: true, // Removed - status changes are rare
   });
 
   // Event history for sessions
@@ -192,14 +192,14 @@ const ChargerPage = () => {
   const { data: sessionDisputedEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "Disputed",
-    watch: true,
+    // watch: true, // Removed - disputes are rare
   });
 
   // Event history for session settlement
   const { data: sessionSettledEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "Settled",
-    watch: true,
+    // watch: true, // Removed - settlements are rare
   });
 
   // Event history for refund claims

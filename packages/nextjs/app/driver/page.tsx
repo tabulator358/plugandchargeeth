@@ -127,21 +127,21 @@ const DriverPage = () => {
   const { data: vehicleEvents } = useScaffoldEventHistory({
     contractName: "VehicleRegistry",
     eventName: "VehicleRegistered",
-    watch: true,
+    // watch: true, // Removed - only load once, refresh on reload
   });
 
   // Event history for trusted chargers
   const { data: trustedChargerEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "TrustedChargerSet",
-    watch: true,
+    // watch: true, // Removed - only load once, refresh on reload
   });
 
   // Event history for charging sessions
   const { data: sessionEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "SessionCreated",
-    watch: true,
+    // watch: true, // Removed - only load once, refresh on reload
   });
 
   // Stable address for comparison
@@ -290,28 +290,28 @@ const DriverPage = () => {
   const { data: chargeProposedEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "ChargeProposed",
-    watch: true,
+    // watch: true, // Removed - only load once, refresh on reload
   });
 
   // Event history for session disputes
   const { data: sessionDisputedEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "Disputed",
-    watch: true,
+    // watch: true, // Removed - only load once, refresh on reload
   });
 
   // Event history for session settlement
   const { data: sessionSettledEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "Settled",
-    watch: true,
+    // watch: true, // Removed - only load once, refresh on reload
   });
 
   // Event history for refund claims
   const { data: refundClaimedEvents } = useScaffoldEventHistory({
     contractName: "PlugAndChargeCore",
     eventName: "Refunded",
-    watch: true,
+    // watch: true, // Removed - only load once, refresh on reload
   });
 
   // Vehicle lookup by ISO-15118 identifier using new contract function

@@ -3126,6 +3126,7 @@ const deployedContracts = {
         renounceOwnership: "@openzeppelin/contracts/access/Ownable2Step.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable2Step.sol",
       },
+      deployedOnBlock: 206036052,
     },
     MockUSDC: {
       address: "0x56754Bed020Df0178198E5c3F7CC9fFfa06c0549",
@@ -3836,6 +3837,7 @@ const deployedContracts = {
         renounceOwnership: "@openzeppelin/contracts/access/Ownable.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable.sol",
       },
+      deployedOnBlock: 206036039,
     },
     PlugAndChargeCore: {
       address: "0xDd1cEa07F84bd4f4e6F4B7F27378B37fbFCEB685",
@@ -5019,6 +5021,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
+      deployedOnBlock: 206036059,
     },
     VehicleRegistry: {
       address: "0x6472BE14D12aeF0987da866E45132Da68B01384d",
@@ -5385,6 +5388,7 @@ const deployedContracts = {
         renounceOwnership: "@openzeppelin/contracts/access/Ownable2Step.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable2Step.sol",
       },
+      deployedOnBlock: 206036046,
     },
   },
 } as const;
