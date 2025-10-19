@@ -93,17 +93,29 @@ const DriverPage = () => {
     args: connectedAddress ? [connectedAddress] : undefined,
   });
 
-  // Get PlugAndChargeCore contract address dynamically
+  // Hardcoded PlugAndChargeCore address for Arbitrum Sepolia
+  const PLUG_AND_CHARGE_CORE_ADDRESS = "0xDd1cEa07F84bd4f4e6F4B7F27378B37fbFCEB685";
+
+  // Get PlugAndChargeCore contract address dynamically (for other purposes)
   const { data: plugAndChargeContract } = useDeployedContractInfo({
     contractName: "PlugAndChargeCore",
   });
 
-  // Read USDC allowance for PlugAndChargeCore
-  const { data: usdcAllowance } = useScaffoldReadContract({
+  // Debug: Log contract addresses
+  useEffect(() => {
+    console.log("🔍 Contract Address Debug:");
+    console.log("  - Connected Address:", connectedAddress);
+    console.log("  - Hardcoded PlugAndChargeCore Address:", PLUG_AND_CHARGE_CORE_ADDRESS);
+    console.log("  - Dynamic PlugAndChargeCore Address:", plugAndChargeContract?.address);
+    console.log("  - Network:", typeof window !== 'undefined' ? window.location.hostname : 'server');
+  }, [connectedAddress, plugAndChargeContract]);
+
+  // Read USDC allowance for PlugAndChargeCore (using hardcoded address)
+  const { data: usdcAllowance, refetch: refetchAllowance } = useScaffoldReadContract({
     contractName: "MockUSDC",
     functionName: "allowance",
-    args: connectedAddress && plugAndChargeContract?.address 
-      ? [connectedAddress, plugAndChargeContract.address] 
+    args: connectedAddress 
+      ? [connectedAddress, PLUG_AND_CHARGE_CORE_ADDRESS] 
       : undefined,
   });
 
@@ -486,17 +498,29 @@ const DriverPage = () => {
     }
   }, [processedSessions]);
 
-  // Approve USDC for PlugAndChargeCore
+  // Approve USDC for PlugAndChargeCore (using hardcoded address)
   const handleApproveUSDC = async () => {
-    if (!connectedAddress || !approvalAmount || !plugAndChargeContract?.address) return;
+    if (!connectedAddress || !approvalAmount) return;
+    
+    console.log("🔍 USDC Approval Debug:");
+    console.log("  - Driver Address:", connectedAddress);
+    console.log("  - Approval Amount:", approvalAmount, "USDC");
+    console.log("  - Target Contract (HARDCODED):", PLUG_AND_CHARGE_CORE_ADDRESS);
+    console.log("  - Parsed Amount:", parseUnits(approvalAmount, 6).toString());
     
     try {
-      await writeUSDCAsync({
+      const tx = await writeUSDCAsync({
         functionName: "approve",
-        args: [plugAndChargeContract.address, parseUnits(approvalAmount, 6)],
+        args: [PLUG_AND_CHARGE_CORE_ADDRESS, parseUnits(approvalAmount, 6)],
       });
+      console.log("✅ USDC Approval successful:", tx);
+      
+      // Refresh allowance after successful approve
+      setTimeout(() => {
+        refetchAllowance();
+      }, 1000);
     } catch (error) {
-      console.error("Error approving USDC:", error);
+      console.error("❌ Error approving USDC:", error);
     }
   };
 
@@ -639,12 +663,26 @@ const DriverPage = () => {
     try {
       const depositAmount = parseUnits(sessionDeposit, 6);
       
+      // Generate session salt if empty
+      let saltToUse = sessionSalt;
+      if (!sessionSalt || sessionSalt === "") {
+        const randomBytes = Array.from({ length: 32 }, () => Math.floor(Math.random() * 256));
+        saltToUse = `0x${randomBytes.map(b => b.toString(16).padStart(2, '0')).join('')}`;
+      }
+      
+      console.log("🚗 Starting charging session with:");
+      console.log("  - Vehicle Hash:", vehicleHash);
+      console.log("  - Charger ID:", selectedChargerId);
+      console.log("  - Deposit Amount:", sessionDeposit, "USDC");
+      console.log("  - Driver Address:", connectedAddress);
+      console.log("  - Session Salt:", saltToUse);
+      
       await writePlugAndChargeAsync({
         functionName: "createSession",
         args: [
           vehicleHash as `0x${string}`,
           BigInt(selectedChargerId),
-          sessionSalt as `0x${string}`,
+          saltToUse as `0x${string}`,
           depositAmount,
           connectedAddress, // sponsor (or address(0) if driver is payer)
           false, // usePermit
