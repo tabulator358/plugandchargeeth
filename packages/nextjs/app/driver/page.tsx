@@ -18,7 +18,8 @@ import {
 import { 
   useScaffoldReadContract, 
   useScaffoldWriteContract,
-  useScaffoldEventHistory 
+  useScaffoldEventHistory,
+  useDeployedContractInfo
 } from "~~/hooks/scaffold-eth";
 import { Address } from "~~/components/scaffold-eth/Address/Address";
 import { parseUnits, formatUnits } from "viem";
@@ -92,11 +93,18 @@ const DriverPage = () => {
     args: connectedAddress ? [connectedAddress] : undefined,
   });
 
+  // Get PlugAndChargeCore contract address dynamically
+  const { data: plugAndChargeContract } = useDeployedContractInfo({
+    contractName: "PlugAndChargeCore",
+  });
+
   // Read USDC allowance for PlugAndChargeCore
   const { data: usdcAllowance } = useScaffoldReadContract({
     contractName: "MockUSDC",
     functionName: "allowance",
-    args: connectedAddress ? [connectedAddress, "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"] : undefined,
+    args: connectedAddress && plugAndChargeContract?.address 
+      ? [connectedAddress, plugAndChargeContract.address] 
+      : undefined,
   });
 
   // Read chargers by operator
@@ -480,12 +488,12 @@ const DriverPage = () => {
 
   // Approve USDC for PlugAndChargeCore
   const handleApproveUSDC = async () => {
-    if (!connectedAddress || !approvalAmount) return;
+    if (!connectedAddress || !approvalAmount || !plugAndChargeContract?.address) return;
     
     try {
       await writeUSDCAsync({
         functionName: "approve",
-        args: ["0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9", parseUnits(approvalAmount, 6)],
+        args: [plugAndChargeContract.address, parseUnits(approvalAmount, 6)],
       });
     } catch (error) {
       console.error("Error approving USDC:", error);
